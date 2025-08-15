@@ -24,3 +24,10 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+.cl-component.cl-button {
+  background: transparent !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+}
+
