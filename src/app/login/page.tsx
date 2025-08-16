@@ -13,12 +13,16 @@ export default function LoginPage() {
   const [role, setRole] = useState("other");
 
   const handleAuth = async () => {
+    const redirectUrl =
+  process.env.NODE_ENV === "production"
+    ? process.env.NEXT_PUBLIC_SUPABASE_REDIRECT_URL_PROD
+    : process.env.NEXT_PUBLIC_SUPABASE_REDIRECT_URL_DEV;
     if (isSignUp) {
       const { error } = await supabase.auth.signUp({
         email,
         password,
         options: {
-          emailRedirectTo: `${window.location.origin}/confirm`
+          emailRedirectTo:redirectUrl
         }
       });
 
