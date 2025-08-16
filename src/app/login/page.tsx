@@ -102,7 +102,7 @@ export default function LoginPage() {
                 className="block text-sm text-purple-400 hover:text-purple-500 transition-colors"
                 aria-label="Sign up if you don't have an account"
               >
-                Don't have an account? <span className="underline">Sign up</span>
+                Don&apos;t have an account? <span className="underline">Sign up</span>
               </a>
             </div>
           </div>
