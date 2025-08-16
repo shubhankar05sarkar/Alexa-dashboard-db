@@ -41,7 +41,7 @@ export default function LoginPage() {
         <div className="relative bg-white/10 backdrop-blur-xl p-8 rounded-2xl shadow-2xl w-full max-w-md border border-white/20 overflow-hidden transition-all duration-300 hover:shadow-[0_0_20px_rgba(59,130,246,0.3)]">
           {/* Glow effect */}
           <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 to-purple-500/10 opacity-50 pointer-events-none" />
-          
+
           <div className="space-y-6">
             {/* Email Input */}
             <div>
@@ -88,14 +88,21 @@ export default function LoginPage() {
               Sign In
             </button>
 
-            {/* Forgot Password */}
-            <div className="text-center mt-2">
+            {/* Forgot Password + Sign Up */}
+            <div className="text-center mt-2 space-y-2">
               <a
                 href="#"
-                className="text-sm text-blue-400 hover:text-blue-500 transition-colors"
+                className="block text-sm text-blue-400 hover:text-blue-500 transition-colors"
                 aria-label="Forgot your password"
               >
                 Forgot your password?
+              </a>
+              <a
+                href="/signup"
+                className="block text-sm text-purple-400 hover:text-purple-500 transition-colors"
+                aria-label="Sign up if you don't have an account"
+              >
+                Don't have an account? <span className="underline">Sign up</span>
               </a>
             </div>
           </div>
