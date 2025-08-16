@@ -13,12 +13,16 @@ export default function LoginPage() {
   const [role, setRole] = useState("other");
 
   const handleAuth = async () => {
+    const redirectUrl =
+  process.env.NODE_ENV === "production"
+    ? process.env.NEXT_PUBLIC_SUPABASE_REDIRECT_URL_PROD
+    : process.env.NEXT_PUBLIC_SUPABASE_REDIRECT_URL_DEV;
     if (isSignUp) {
       const { error } = await supabase.auth.signUp({
         email,
         password,
         options: {
-          emailRedirectTo: `${window.location.origin}/confirm`
+          emailRedirectTo:redirectUrl
         }
       });
 
@@ -108,7 +112,7 @@ export default function LoginPage() {
 
       <div className="flex flex-col min-h-screen items-center justify-center px-4 relative z-10">
         <h1 className="text-5xl sm:text-4xl xs:text-3xl font-extrabold text-white mb-12 mt-4 text-center">
-          {isSignUp ? "Sign Up for ADS Dashboard" : "Sign In to ADS Dashboard"}
+          {isSignUp ? "Sign Up for hey ADS Dashboard" : "Sign In to hey ADS Dashboard"}
         </h1>
 
         <div className="relative bg-white/10 backdrop-blur-xl p-8 rounded-2xl shadow-2xl w-full max-w-md border border-white/20 overflow-hidden">
