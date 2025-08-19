@@ -1,25 +1,20 @@
 "use client";
 
-import { usePathname, useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 
 export default function AuthWrapper({ children }: { children: React.ReactNode }) {
-  const pathname = usePathname();
   const router = useRouter();
+  const pathname = usePathname();
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Pages that don't need authentication
-    const publicPaths = ["/", "/login"];
-
-    if (publicPaths.includes(pathname)) {
+    if (pathname === "/login") {
       setLoading(false);
       return;
     }
 
-    // Check login status
     const loggedIn = localStorage.getItem("isLoggedIn");
-
     if (!loggedIn) {
       router.push("/login");
     } else {
@@ -27,9 +22,7 @@ export default function AuthWrapper({ children }: { children: React.ReactNode })
     }
   }, [pathname, router]);
 
-  if (loading) {
-    return <div>Loading...</div>; // can replace with spinner later
-  }
+  if (loading) return null;
 
   return <>{children}</>;
 }
