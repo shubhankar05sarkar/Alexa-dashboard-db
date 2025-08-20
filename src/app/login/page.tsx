@@ -138,6 +138,8 @@ export default function LoginPage() {
                 onChange={(e) => setEmail(e.target.value)}
                 className="w-full p-3 bg-white/5 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all duration-200 hover:border-blue-400/50"
                 required
+                aria-required="true"
+                aria-label="Email"
               />
             </div>
 
@@ -154,13 +156,16 @@ export default function LoginPage() {
                 onChange={(e) => setPassword(e.target.value)}
                 className="w-full p-3 bg-white/5 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all duration-200 hover:border-blue-400/50"
                 required
+                aria-required="true"
+                aria-label="Password"
               />
             </div>
 
              {/* Auth Button */}
              <button
               onClick={handleAuth}
-              className="w-full bg-blue-600 text-white p-3 rounded-lg font-semibold hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400"
+              className="w-full bg-blue-600 text-white p-3 rounded-lg font-semibold hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:ring-offset-transparent transition-all duration-200 hover:scale-105 active:scale-95"
+              aria-label="Sign in"
             >
               {isSignUp ? "Sign Up" : "Sign In"}
             </button>
@@ -170,6 +175,7 @@ export default function LoginPage() {
               <a
                 href="#"
                 className="block text-sm text-blue-400 hover:text-blue-500 transition-colors"
+                aria-label="Forgot your password"
               >
                 Forgot your password?
               </a>
@@ -189,6 +195,14 @@ export default function LoginPage() {
           </div>
         </div>
       </div>
+      {/* Mobile specific scaling for logo */}
+      <style jsx>{`
+        @media (max-width: 480px) {
+          .absolute.top-4.left-4 img {
+            height: 32px; /* smaller logo on mobile */
+          }
+        }
+      `}</style>
     </div>
   );
 
