@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { Event } from "../types/types";
 import { useRouter } from "next/navigation";
+import { supabase } from "../lib/supabase-client";
 
 const events: Event[] = [
   {
@@ -50,9 +51,15 @@ const events: Event[] = [
 export default function AlexaVerseV2() {
   const router = useRouter();
 
-  const handleLogout = () => {
+  const handleLogout =async () => {
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      console.error("Error signing out:", error.message);
+      return;
+    }
+    // redirect to login page after logout
+    router.push("/login");
     localStorage.removeItem("isLoggedIn");
-    router.replace("/login"); // client-side logout redirect
   };
 
   return (
