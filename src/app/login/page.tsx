@@ -174,13 +174,6 @@ export default function LoginPage() {
             <div className="text-center mt-2 space-y-2">
               <a
                 href="#"
-                className="block text-sm text-blue-400 hover:text-blue-500 transition-colors"
-                aria-label="Forgot your password"
-              >
-                Forgot your password?
-              </a>
-              <a
-                href="#"
                 onClick={(e) => {
                   e.preventDefault();
                   setIsSignUp(!isSignUp);
