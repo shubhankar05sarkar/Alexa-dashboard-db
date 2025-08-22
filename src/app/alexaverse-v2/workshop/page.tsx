@@ -6,6 +6,15 @@ import { IndividualRegistration } from "../../types/types";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 
+interface ApiParticipant {
+  _id?: string;
+  name: string;
+  registrationNumber: string;
+  srmMailId: string;
+  phoneNumber: string;
+  registeredAt: string;
+}
+
 export default function WorkshopPage() {
   const [registrations, setRegistrations] = useState<IndividualRegistration[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
@@ -32,7 +41,7 @@ export default function WorkshopPage() {
 
         if (result.success && Array.isArray(result.data)) {
           const formatted: IndividualRegistration[] = result.data.map(
-            (p: any, idx: number) => ({
+            (p: ApiParticipant, idx: number) => ({
               id: p._id || String(idx),
               name: p.name,
               registerNumber: p.registrationNumber,
@@ -48,8 +57,12 @@ export default function WorkshopPage() {
         } else {
           console.error("Unexpected response shape:", result);
         }
-      } catch (e: any) {
-        console.error("Error fetching participants:", e?.message || e);
+      } catch (e: unknown) {
+        if (e instanceof Error) {
+          console.error("Error fetching participants:", e.message);
+        } else {
+          console.error("Unknown error fetching participants:", e);
+        }
       }
     };
 

@@ -5,6 +5,15 @@ import IndividualRegistrationTable from "../../components/IndividualRegistration
 import { IndividualRegistration } from "../../types/types";
 import { useState, useEffect } from "react";
 
+type ApiParticipant = {
+  _id?: string;
+  name: string;
+  registrationNumber: string;
+  srmMailId: string;
+  phoneNumber: string;
+  registeredAt: string;
+};
+
 export default function VlogitPage() {
   const [registrations, setRegistrations] = useState<IndividualRegistration[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
@@ -26,11 +35,11 @@ export default function VlogitPage() {
         );
 
         if (!res.ok) throw new Error(`GET ${res.status} ${res.statusText}`);
-        const result = await res.json();
+        const result: { success: boolean; data: ApiParticipant[] } = await res.json();
 
         if (result.success && Array.isArray(result.data)) {
           const formatted: IndividualRegistration[] = result.data.map(
-            (p: any, idx: number) => ({
+            (p: ApiParticipant, idx: number) => ({
               id: p._id || String(idx),
               name: p.name,
               registerNumber: p.registrationNumber,
@@ -46,8 +55,12 @@ export default function VlogitPage() {
         } else {
           console.error("Unexpected response shape:", result);
         }
-      } catch (e: any) {
-        console.error("Error fetching participants:", e?.message || e);
+      } catch (e: unknown) {
+        if (e instanceof Error) {
+          console.error("Error fetching participants:", e.message);
+        } else {
+          console.error("Unexpected error:", e);
+        }
       }
     };
 
