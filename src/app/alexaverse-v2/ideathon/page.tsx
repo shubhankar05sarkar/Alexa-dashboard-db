@@ -3,38 +3,55 @@
 import Link from 'next/link';
 import TeamRegistrationTable from '../../components/TeamRegistrationTable';
 import { TeamRegistration } from '../../types/types';
-import { useState } from 'react';
-
-const registrations: TeamRegistration[] = [
-  {
-    teamId: 'team1',
-    teamName: 'The Innovators',
-    registeredAt: 'Aug 14, 2025 10:30 AM',
-    members: [
-      { id: 'm1', name: 'Rahul Sharma (Team Lead)', registerNumber: 'RA2311003010001', email: 'rs1234@srmist.edu.in', phone: '9876543210' },
-      { id: 'm2', name: 'Priya Patel', registerNumber: 'RA2411003010002', email: 'pp1234@srmist.edu.in', phone: '8765432109' },
-      { id: 'm3', name: 'Amit Singh', registerNumber: 'RA2511003010003', email: 'as1234@srmist.edu.in', phone: '7654321098' },
-      { id: 'm4', name: 'Neha Gupta', registerNumber: 'RA2311003010004', email: 'ng1234@srmist.edu.in', phone: '6543210987' }
-    ]
-  },
-  {
-    teamId: 'team2',
-    teamName: 'Tech Pioneers',
-    registeredAt: 'Aug 14, 2025 11:45 AM',
-    members: [
-      { id: 'm5', name: 'Sanjay Verma (Team Lead)', registerNumber: 'RA2411003010005', email: 'sv1234@srmist.edu.in', phone: '9876543211' },
-      { id: 'm6', name: 'Ananya Reddy', registerNumber: 'RA2511003010006', email: 'ar1234@srmist.edu.in', phone: '8765432110' },
-      { id: 'm7', name: 'Vikram Joshi', registerNumber: 'RA2311003010007', email: 'vj1234@srmist.edu.in', phone: '7654321099' },
-      { id: 'm8', name: 'Divya Nair', registerNumber: 'RA2411003010008', email: 'dn1234@srmist.edu.in', phone: '6543210988' }
-    ]
-  }
-];
+import { useState, useEffect } from 'react';
 
 export default function IdeathonPage() {
+  const [registrations, setRegistrations] = useState<TeamRegistration[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [yearFilter, setYearFilter] = useState<string | null>(null);
   const [showMobileSearch, setShowMobileSearch] = useState(false);
   const [showMobileFilter, setShowMobileFilter] = useState(false);
+
+  useEffect(() => {
+    const fetchTeams = async () => {
+      try {
+        const res = await fetch("https://alexaverse-reg-be.onrender.com/api/ideathon/participants", {
+          method: "GET",
+          headers: {
+            "x-event-password": "alexaprod2526"
+          }
+        });
+
+        if (!res.ok) throw new Error(`GET ${res.status} ${res.statusText}`);
+        const result = await res.json();
+
+        if (result.success && Array.isArray(result.data)) {
+          const formatted: TeamRegistration[] = result.data.map((team: any, idx: number) => ({
+            teamId: team._id || String(idx),
+            teamName: team.teamName,
+            registeredAt: new Date(team.registeredAt).toLocaleString("en-IN", {
+              dateStyle: "medium",
+              timeStyle: "short",
+            }),
+            members: team.teamMembers.map((m: any, midx: number) => ({
+              id: m._id || `${team._id}-${midx}`,
+              name: m.name,
+              registerNumber: m.registrationNumber,
+              email: m.srmMailId,
+              phone: m.phoneNumber,
+            })),
+          }));
+          setRegistrations(formatted);
+        } else {
+          console.error("Unexpected response shape:", result);
+        }
+      } catch (err) {
+        console.error("Error fetching teams:", err);
+      }
+    };
+
+    fetchTeams();
+  }, []);
 
   const handleLogout = () => {
     localStorage.removeItem("isAuthenticated");
