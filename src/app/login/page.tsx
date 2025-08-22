@@ -9,11 +9,11 @@ export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [isSignUp, setIsSignUp] = useState(false);
+  //const [isSignUp, setIsSignUp] = useState(false);
   const [role, setRole] = useState("other");
 
   const handleAuth = async () => {
-    const redirectUrl =
+    {/*const redirectUrl =
   process.env.NODE_ENV === "production"
     ? process.env.NEXT_PUBLIC_SUPABASE_REDIRECT_URL_PROD
     : process.env.NEXT_PUBLIC_SUPABASE_REDIRECT_URL_DEV;
@@ -37,7 +37,7 @@ export default function LoginPage() {
       setPassword("");
       setIsSignUp(false);
       return;
-    }
+    }*/}
 
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
@@ -93,7 +93,6 @@ export default function LoginPage() {
 
     const role = userData.role;
     localStorage.setItem("isLoggedIn", "true");
-    console.log("Fetched role:", role); 
     toast.success("Signed in successfully");
 
     router.push("/");
@@ -116,7 +115,8 @@ export default function LoginPage() {
       <div className="flex flex-col min-h-screen items-center justify-center px-4 relative z-10">
         {/* Page Heading */}
         <h1 className="text-5xl sm:text-4xl xs:text-3xl font-extrabold text-white mb-12 mt-4 text-center">
-          {isSignUp ? "Sign Up to ADS Dashboard" : "Login to ADS Dashboard"}
+          Login to ADS Dashboard
+          {/*{isSignUp ? "Sign Up to ADS Dashboard" : "Login to ADS Dashboard"}*/}
         </h1>
 
         {/* Login Box */}
@@ -167,22 +167,25 @@ export default function LoginPage() {
               className="w-full bg-blue-600 text-white p-3 rounded-lg font-semibold hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:ring-offset-transparent transition-all duration-200 hover:scale-105 active:scale-95"
               aria-label="Sign in"
             >
-              {isSignUp ? "Sign Up" : "Sign In"}
+              Sign in
+              {/*{isSignUp ? "Sign Up" : "Sign In"}*/}
             </button>
 
             {/* Forgot Password + Sign Up */}
             <div className="text-center mt-2 space-y-2">
               <a
                 href="#"
-                onClick={(e) => {
+                /* onClick={(e) => {
                   e.preventDefault();
                   setIsSignUp(!isSignUp);
-                }}
+                }} */
                 className="block text-sm text-purple-400 hover:text-purple-500 transition-colors"
               >
+                {/*}
                 {isSignUp
                   ? "Already have an account? Login"
-                  : "Don’t have an account? Sign up"}
+                  : "Don’t have an account? Sign up"}*/}
+                  Login to access the dashboard
               </a>
             </div>
           </div>
