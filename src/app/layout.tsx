@@ -2,6 +2,7 @@ import './globals.css';
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import AuthWrapper from './components/AuthWrapper';
+import { Toaster } from "react-hot-toast";
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -21,6 +22,7 @@ export default function RootLayout({
         <AuthWrapper>
           <main className="min-h-screen">{children}</main>
         </AuthWrapper>
+        <Toaster position="top-center" reverseOrder={false} />
       </body>
     </html>
   );

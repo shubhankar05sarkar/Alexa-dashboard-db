@@ -2,19 +2,100 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { supabase } from "../lib/supabase-client";
+import { toast } from "react-hot-toast";
 
 export default function LoginPage() {
   const router = useRouter();
-  const [email, setEmail] = useState<string>("");
-  const [password, setPassword] = useState<string>("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  //const [isSignUp, setIsSignUp] = useState(false);
+  const [role, setRole] = useState("other");
 
-  const handleLogin = () => {
-    if (email && password) {
-      localStorage.setItem("isLoggedIn", "true");
-      router.push("/");
-    } else {
-      alert("Please enter both email and password");
+  const handleAuth = async () => {
+    {/*const redirectUrl =
+  process.env.NODE_ENV === "production"
+    ? process.env.NEXT_PUBLIC_SUPABASE_REDIRECT_URL_PROD
+    : process.env.NEXT_PUBLIC_SUPABASE_REDIRECT_URL_DEV;
+    if (isSignUp) {
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo:redirectUrl
+        }
+      });
+
+      if (error) {
+        console.error(error.message);
+        toast.error("Sign Up failed. Try again");
+        return;
+      }
+
+      toast.success("Signup successful! Please check your email to confirm.");
+      setEmail("");
+      setPassword("");
+      setIsSignUp(false);
+      return;
+    }*/}
+
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password
+    });
+
+    if (error) {
+      toast.error("Sign In failed. Try again");
+      return;
     }
+
+    const user = data.user;
+
+    const { data: existingUser, error: existingError } = await supabase
+      .from("users")
+      .select("role")
+      .eq("id", user.id)
+      .single();
+
+    if (existingError && existingError.code !== "PGRST116") {
+      console.error(existingError.message);
+      return;
+    }
+
+    if (!existingUser) {
+      const { error: insertError } = await supabase.from("users").insert({
+        id: user.id,
+        email: user.email,
+        role: "public"
+      });
+      if (insertError) {
+        console.error(insertError.message);
+        return;
+      }
+    }
+    const { data: { session } } = await supabase.auth.getSession();
+
+    if (!session?.user?.id) {
+      throw new Error('No authenticated user found');
+    }
+
+    const userId = session.user.id; 
+
+    const { data: userData, error: userError } = await supabase
+      .from('users')
+      .select('role')
+      .eq('id', userId)
+      .single();
+
+    if (userError || !userData) {
+      throw new Error(userError?.message || 'User role not found');
+    }
+
+    const role = userData.role;
+    localStorage.setItem("isLoggedIn", "true");
+    toast.success("Signed in successfully");
+
+    router.push("/");
   };
 
   return (
@@ -35,6 +116,7 @@ export default function LoginPage() {
         {/* Page Heading */}
         <h1 className="text-5xl sm:text-4xl xs:text-3xl font-extrabold text-white mb-12 mt-4 text-center">
           Login to ADS Dashboard
+          {/*{isSignUp ? "Sign Up to ADS Dashboard" : "Login to ADS Dashboard"}*/}
         </h1>
 
         {/* Login Box */}
@@ -79,36 +161,36 @@ export default function LoginPage() {
               />
             </div>
 
-            {/* Sign In Button */}
-            <button
-              onClick={handleLogin}
+             {/* Auth Button */}
+             <button
+              onClick={handleAuth}
               className="w-full bg-blue-600 text-white p-3 rounded-lg font-semibold hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:ring-offset-transparent transition-all duration-200 hover:scale-105 active:scale-95"
               aria-label="Sign in"
             >
-              Sign In
+              Sign in
+              {/*{isSignUp ? "Sign Up" : "Sign In"}*/}
             </button>
 
             {/* Forgot Password + Sign Up */}
             <div className="text-center mt-2 space-y-2">
               <a
                 href="#"
-                className="block text-sm text-blue-400 hover:text-blue-500 transition-colors"
-                aria-label="Forgot your password"
-              >
-                Forgot your password?
-              </a>
-              <a
-                href="/signup"
+                /* onClick={(e) => {
+                  e.preventDefault();
+                  setIsSignUp(!isSignUp);
+                }} */
                 className="block text-sm text-purple-400 hover:text-purple-500 transition-colors"
-                aria-label="Sign up if you don't have an account"
               >
-                Don&apos;t have an account? <span className="underline">Sign up</span>
+                {/*
+                {isSignUp
+                  ? "Already have an account? Login"
+                  : "Don’t have an account? Sign up"}*/}
+                  {/*Login to access the dashboard*/}
               </a>
             </div>
           </div>
         </div>
       </div>
-
       {/* Mobile specific scaling for logo */}
       <style jsx>{`
         @media (max-width: 480px) {
@@ -119,4 +201,5 @@ export default function LoginPage() {
       `}</style>
     </div>
   );
+
 }
