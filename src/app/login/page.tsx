@@ -181,11 +181,11 @@ export default function LoginPage() {
                 }} */
                 className="block text-sm text-purple-400 hover:text-purple-500 transition-colors"
               >
-                {/*}
+                {/*
                 {isSignUp
                   ? "Already have an account? Login"
                   : "Don’t have an account? Sign up"}*/}
-                  Login to access the dashboard
+                  {/*Login to access the dashboard*/}
               </a>
             </div>
           </div>
