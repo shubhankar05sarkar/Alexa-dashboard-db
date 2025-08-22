@@ -5,6 +5,21 @@ import TeamRegistrationTable from '../../components/TeamRegistrationTable';
 import { TeamRegistration } from '../../types/types';
 import { useState, useEffect } from 'react';
 
+// Define API response types instead of using "any"
+type ApiTeamMember = {
+  name: string;
+  registrationNumber: string;
+  srmMailId: string;
+  phoneNumber: string;
+};
+
+type ApiTeam = {
+  _id: string;
+  teamName: string;
+  registeredAt: string;
+  teamMembers: ApiTeamMember[];
+};
+
 export default function HangmanPage() {
   const [registrations, setRegistrations] = useState<TeamRegistration[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -29,14 +44,14 @@ export default function HangmanPage() {
         const result = await res.json();
 
         if (result.success && Array.isArray(result.data)) {
-          const formatted: TeamRegistration[] = result.data.map((team: any) => ({
+          const formatted: TeamRegistration[] = (result.data as ApiTeam[]).map((team) => ({
             teamId: team._id,
             teamName: team.teamName,
             registeredAt: new Date(team.registeredAt).toLocaleString("en-IN", {
               dateStyle: "medium",
               timeStyle: "short",
             }),
-            members: team.teamMembers.map((m: any, idx: number) => ({
+            members: team.teamMembers.map((m, idx: number) => ({
               id: `${team._id}_m${idx}`,
               name: m.name,
               registerNumber: m.registrationNumber,
@@ -48,8 +63,12 @@ export default function HangmanPage() {
         } else {
           console.error("Unexpected response shape:", result);
         }
-      } catch (e: any) {
-        console.error("Error fetching participants:", e?.message || e);
+      } catch (e: unknown) {
+        if (e instanceof Error) {
+          console.error("Error fetching participants:", e.message);
+        } else {
+          console.error("Unknown error fetching participants:", e);
+        }
       }
     };
 

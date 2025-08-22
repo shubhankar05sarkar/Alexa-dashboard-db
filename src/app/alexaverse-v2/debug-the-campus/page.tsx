@@ -26,30 +26,39 @@ export default function DebugCampPage() {
         );
 
         if (!res.ok) throw new Error(`GET ${res.status} ${res.statusText}`);
-        const result = await res.json();
+        const result: { success: boolean; data?: Record<string, unknown>[] } = await res.json();
 
         if (result.success && Array.isArray(result.data)) {
-          const formatted: TeamRegistration[] = result.data.map((team: any) => ({
-            teamId: team._id,
-            teamName: team.teamName,
-            registeredAt: new Date(team.registeredAt).toLocaleString("en-IN", {
-              dateStyle: "medium",
-              timeStyle: "short",
-            }),
-            members: team.teamMembers.map((m: any, idx: number) => ({
-              id: `${team._id}_m${idx}`,
-              name: m.name,
-              registerNumber: m.registrationNumber,
-              email: m.srmMailId,
-              phone: m.phoneNumber,
-            })),
-          }));
+          const formatted: TeamRegistration[] = result.data.map((team) => {
+            const t = team as Record<string, unknown>;
+            return {
+              teamId: String(t["_id"]),
+              teamName: String(t["teamName"]),
+              registeredAt: new Date(String(t["registeredAt"])).toLocaleString("en-IN", {
+                dateStyle: "medium",
+                timeStyle: "short",
+              }),
+              members: Array.isArray(t["teamMembers"])
+                ? (t["teamMembers"] as Record<string, unknown>[]).map((m, idx: number) => ({
+                    id: `${t["_id"]}_m${idx}`,
+                    name: String(m["name"]),
+                    registerNumber: String(m["registrationNumber"]),
+                    email: String(m["srmMailId"]),
+                    phone: String(m["phoneNumber"]),
+                  }))
+                : [],
+            };
+          });
           setRegistrations(formatted);
         } else {
           console.error("Unexpected response shape:", result);
         }
-      } catch (e: any) {
-        console.error("Error fetching participants:", e?.message || e);
+      } catch (e: unknown) {
+        if (e instanceof Error) {
+          console.error("Error fetching participants:", e.message);
+        } else {
+          console.error("Unknown error fetching participants:", e);
+        }
       }
     };
 
