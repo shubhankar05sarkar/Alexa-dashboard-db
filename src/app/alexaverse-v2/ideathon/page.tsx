@@ -6,7 +6,7 @@ import { TeamRegistration } from '../../types/types';
 import { useState } from 'react';
 
 const registrations: TeamRegistration[] = [
-  {
+  /*{
     teamId: 'team1',
     teamName: 'The Innovators',
     registeredAt: 'Aug 14, 2025 10:30 AM',
@@ -27,7 +27,7 @@ const registrations: TeamRegistration[] = [
       { id: 'm7', name: 'Vikram Joshi', registerNumber: 'RA2311003010007', email: 'vj1234@srmist.edu.in', phone: '7654321099' },
       { id: 'm8', name: 'Divya Nair', registerNumber: 'RA2411003010008', email: 'dn1234@srmist.edu.in', phone: '6543210988' }
     ]
-  }
+  }*/
 ];
 
 export default function IdeathonPage() {
@@ -107,15 +107,15 @@ export default function IdeathonPage() {
               <div className="flex flex-wrap gap-4 mt-2">
                 <span>📅 Sep 03, 2025</span>
                 <span>📍 Mini Hall 2</span>
-                <span>👥 {filteredRegistrations.length} Teams Registered</span>
+                {/*<span>👥 {filteredRegistrations.length} Teams Registered</span>*/}
               </div>
             </div>
             
+            {/*
             <div className="p-6">
               <div className="flex justify-between items-center mb-6">
                 <h2 className="text-2xl font-bold text-white">Team Registrations</h2>
 
-                {/* Desktop Inputs */}
                 <div className="hidden md:flex gap-4">
                   <div className="relative">
                     <select
@@ -159,7 +159,6 @@ export default function IdeathonPage() {
                   </div>
                 </div>
 
-                {/* Mobile Icon Buttons */}
                 <div className="flex md:hidden gap-2">
                   <button
                     onClick={() => setShowMobileSearch(!showMobileSearch)}
@@ -182,7 +181,6 @@ export default function IdeathonPage() {
                 </div>
               </div>
 
-              {/* Conditionally show mobile search/filter */}
               {showMobileSearch && (
                 <div className="mb-4">
                   <input
@@ -194,6 +192,7 @@ export default function IdeathonPage() {
                   />
                 </div>
               )}
+
               {showMobileFilter && (
                 <div className="mb-4">
                   <select
@@ -214,7 +213,19 @@ export default function IdeathonPage() {
                 <TeamRegistrationTable registrations={filteredRegistrations} />
               </div>
             </div>
+            */}
+
           </div>
+
+          <a 
+          href="https://docs.google.com/spreadsheets/d/1zGRCYjNFFfWU3eXfd0-R45ejWw8yyyJHANFp9BXK4os/edit?usp=sharing" 
+          target="_blank" 
+          rel="noopener noreferrer"
+          >
+            <button className="px-5 py-2.5 bg-gradient-to-r from-blue-900 to-green-900 text-white font-medium rounded-xl shadow-md hover:scale-110  hover:shadow-lg transition-all duration-200 absolute left-1/2 top-[120%] transform -translate-x-1/2">
+              Google Sheet
+            </button>
+          </a>
         </div>
       </div>
 
