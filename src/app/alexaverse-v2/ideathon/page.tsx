@@ -222,8 +222,8 @@ export default function IdeathonPage() {
           target="_blank" 
           rel="noopener noreferrer"
           >
-            <button className="px-5 py-2.5 bg-gradient-to-r from-blue-900 to-green-900 text-white font-medium rounded-xl shadow-md hover:scale-110  hover:shadow-lg transition-all duration-200 absolute left-1/2 top-[120%] transform -translate-x-1/2">
-              Google Sheet
+            <button className="px-6 py-6.5 text-3xl bg-gradient-to-r from-blue-900 to-green-900 text-white font-bold rounded-xl shadow-md hover:scale-110  hover:shadow-lg transition-all duration-200 absolute left-1/2 top-[120%] transform -translate-x-1/2">
+              View Google sheet
             </button>
           </a>
         </div>
