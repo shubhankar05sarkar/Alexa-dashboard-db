@@ -31,14 +31,6 @@ const events: Event[] = [
     isTeamEvent: false,
   },
   {
-    id: "hangman",
-    name: "Hangman",
-    description: "Solve questions",
-    date: "Sep 02, 2025",
-    location: "JC Bose Hall",
-    isTeamEvent: true,
-  },
-  {
     id: "debug-the-campus",
     name: "Debug the Campus",
     description: "Find QRs",
@@ -51,13 +43,12 @@ const events: Event[] = [
 export default function AlexaVerseV2() {
   const router = useRouter();
 
-  const handleLogout =async () => {
+  const handleLogout = async () => {
     const { error } = await supabase.auth.signOut();
     if (error) {
       console.error("Error signing out:", error.message);
       return;
     }
-    // redirect to login page after logout
     router.push("/login");
     localStorage.removeItem("isLoggedIn");
   };
@@ -89,6 +80,14 @@ export default function AlexaVerseV2() {
       </div>
 
       <div className="container mx-auto pt-16 px-4 sm:px-6 lg:px-8 relative z-10">
+        {/* Back Link */}
+        <Link
+          href="/"
+          className="inline-flex items-center text-purple-300 hover:text-purple-200 mb-6 transition-colors"
+        >
+          ← Back to main page
+        </Link>
+
         <h1 className="text-3xl sm:text-2xl xs:text-xl font-bold text-white mb-8 text-center">
           AlexaVerse 2.0 Events
         </h1>
@@ -100,9 +99,7 @@ export default function AlexaVerseV2() {
                 <h2 className="text-2xl font-bold text-white">{event.name}</h2>
                 <p className="text-white/80 mt-2">{event.description}</p>
                 <div className="mt-4 flex justify-between items-center">
-                  <span className="text-sm text-white/60">
-                    📅 {event.date}
-                  </span>
+                  <span className="text-sm text-white/60">📅 {event.date}</span>
                   <span
                     className={`rounded-full px-3 py-1 text-sm font-semibold ${
                       event.isTeamEvent

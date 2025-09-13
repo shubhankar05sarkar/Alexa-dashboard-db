@@ -44,11 +44,22 @@ export default function Home() {
         </button>
       </div>
 
-      <div className="flex flex-col items-center justify-center min-h-screen px-4 gap-4 sm:gap-6 relative z-10">
-        <Link href="/alexaverse-v2">
+      {/* Centered Cards */}
+      <div className="flex flex-col sm:flex-row items-center justify-center min-h-screen px-4 gap-6 relative z-10">
+        {/* AlexaVerse 2.0 */}
+        <Link href="/alexaverse-v2" className="w-full sm:w-auto">
           <div className="bg-white/10 backdrop-blur-md p-8 rounded-xl shadow-2xl border border-white/20 w-full max-w-md sm:max-w-sm xs:max-w-xs transition-all duration-200 hover:scale-102 hover:shadow-[0_0_10px_rgba(59,130,246,0.3)] cursor-pointer">
             <h1 className="text-4xl sm:text-3xl xs:text-2xl font-bold text-white mb-2 text-center">
               AlexaVerse 2.0
+            </h1>
+          </div>
+        </Link>
+
+        {/* Recruitments 2025 */}
+        <Link href="/recruitments25" className="w-full sm:w-auto">
+          <div className="bg-white/10 backdrop-blur-md p-8 rounded-xl shadow-2xl border border-white/20 w-full max-w-md sm:max-w-sm xs:max-w-xs transition-all duration-200 hover:scale-102 hover:shadow-[0_0_10px_rgba(59,130,246,0.3)] cursor-pointer">
+            <h1 className="text-4xl sm:text-3xl xs:text-2xl font-bold text-white mb-2 text-center">
+              Recruitments 2025
             </h1>
           </div>
         </Link>
