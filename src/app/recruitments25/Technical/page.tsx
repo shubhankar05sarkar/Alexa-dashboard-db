@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import IndividualRegistrationTable from "../../components/IndividualRegistrationTable";
 import { IndividualRegistration } from "../../types/types";
-import Papa from "papaparse";
+import Papa, { ParseResult } from "papaparse";
 
 export default function TechnicalPage() {
   const router = useRouter();
@@ -86,7 +86,7 @@ export default function TechnicalPage() {
     Papa.parse(bulkFile, {
       header: true,
       skipEmptyLines: true,
-      complete: (results) => {
+      complete: (results: ParseResult<Record<string, string>>) => {
         const dataRows = results.data as Record<string, string>[];
         const regNumbers: string[] = dataRows.map((row) => row.registerNumber?.trim() || "");
 

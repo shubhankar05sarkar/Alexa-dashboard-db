@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import IndividualRegistrationTable from "../../components/IndividualRegistrationTable";
 import { IndividualRegistration } from "../../types/types";
-import Papa from "papaparse";
+import Papa, { ParseResult } from "papaparse";
 
 type BulkCSVRow = {
   registerNumber?: string;
@@ -89,7 +89,7 @@ export default function BusinessPage() {
     Papa.parse<BulkCSVRow>(bulkFile, {
       header: true,
       skipEmptyLines: true,
-      complete: (results) => {
+      complete: (results: ParseResult<Record<string, string>>) => {
         const regNumbers: string[] = results.data.map((row) =>
           row.registerNumber?.trim() || ""
         );
