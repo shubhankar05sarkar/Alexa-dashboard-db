@@ -20,7 +20,9 @@ export type IndividualRegistration = {
   email: string;
   phone: string;
   registeredAt: string;
+  round: number;
 };
+
 
 export type Event = {
   id: string;

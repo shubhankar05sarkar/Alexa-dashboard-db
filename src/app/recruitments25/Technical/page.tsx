@@ -5,22 +5,27 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import IndividualRegistrationTable from "../../components/IndividualRegistrationTable";
 import { IndividualRegistration } from "../../types/types";
+import Papa from "papaparse";
 
 export default function TechnicalPage() {
   const router = useRouter();
 
-  const [registrations] = useState<IndividualRegistration[]>([]); // replace with API data later if needed
+  const [registrations, setRegistrations] = useState<IndividualRegistration[]>([]); // replace with API data later
   const [searchTerm, setSearchTerm] = useState("");
   const [yearFilter, setYearFilter] = useState<string | null>(null);
+  const [roundFilter, setRoundFilter] = useState<string | null>(null);
   const [showMobileSearch, setShowMobileSearch] = useState(false);
   const [showMobileFilter, setShowMobileFilter] = useState(false);
+  const [showBulkModal, setShowBulkModal] = useState(false);
+  const [bulkFile, setBulkFile] = useState<File | null>(null);
+  const [bulkRound, setBulkRound] = useState("2");
+  const [toastMessage, setToastMessage] = useState("");
 
   const handleLogout = () => {
     localStorage.removeItem("isLoggedIn");
     router.push("/login");
   };
 
-  // Helper to derive year of study from register number
   const getYearOfStudy = (registerNumber: string): number => {
     const batchYear = parseInt(registerNumber.substring(2, 4));
     const currentYear = 2025;
@@ -39,8 +44,83 @@ export default function TechnicalPage() {
       ? getYearOfStudy(participant.registerNumber).toString() === yearFilter
       : true;
 
-    return matchesSearch && matchesYear;
+    const matchesRound = roundFilter
+      ? participant.round.toString() === roundFilter
+      : true;
+
+    return matchesSearch && matchesYear && matchesRound;
   });
+
+  // --- CSV Export Function ---
+  const handleExport = () => {
+    if (filteredRegistrations.length === 0) {
+      setToastMessage("No participants to export");
+      setTimeout(() => setToastMessage(""), 3000);
+      return;
+    }
+
+    const csvHeader = ["Name", "Register Number", "Email", "Phone", "Round"];
+    const csvRows = filteredRegistrations.map((p) =>
+      [p.name, p.registerNumber, p.email, p.phone, p.round].join(",")
+    );
+
+    const csvContent = [csvHeader.join(","), ...csvRows].join("\n");
+    const blob = new Blob([csvContent], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "participants.csv";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    setToastMessage(`${filteredRegistrations.length} participants exported successfully`);
+    setTimeout(() => setToastMessage(""), 3000);
+  };
+
+  // --- Bulk Update ---
+  const handleBulkUpdate = () => {
+    if (!bulkFile) return;
+
+    Papa.parse(bulkFile, {
+      header: true,
+      skipEmptyLines: true,
+      complete: (results) => {
+        const regNumbers: string[] = results.data.map((row: any) => row.registerNumber?.trim());
+
+        const notFound: string[] = [];
+        const updatedRegistrations = registrations.map((p) => {
+          if (regNumbers.includes(p.registerNumber)) {
+            return { ...p, round: Number(bulkRound) };
+          }
+          return p;
+        });
+
+        // Check which registration numbers were not found
+        regNumbers.forEach((rn) => {
+          if (!registrations.some((p) => p.registerNumber === rn)) {
+            notFound.push(rn);
+          }
+        });
+
+        setRegistrations(updatedRegistrations);
+
+        setToastMessage(
+          `${regNumbers.length - notFound.length} participants moved to Round ${bulkRound}` +
+          (notFound.length ? `. Not found: ${notFound.join(", ")}` : "")
+        );
+
+        setShowBulkModal(false);
+        setBulkFile(null);
+        setTimeout(() => setToastMessage(""), 5000);
+      },
+      error: (err) => {
+        console.error("CSV Parsing Error:", err);
+        setToastMessage("Failed to parse CSV file");
+        setTimeout(() => setToastMessage(""), 3000);
+      },
+    });
+  };
 
   return (
     <div className="min-h-screen bg-black relative">
@@ -48,7 +128,7 @@ export default function TechnicalPage() {
       <div className="absolute inset-0 bg-gradient-to-br from-purple-800/20 via-blue-800/10 to-black z-0 pointer-events-none" />
 
       <div className="relative z-10 p-8">
-        {/* Alexa Logo + Back Link */}
+        {/* Logo + Back */}
         <div className="absolute top-4 left-4 p-2 z-12 flex flex-col items-start gap-2">
           <Link href="/">
             <img
@@ -65,11 +145,11 @@ export default function TechnicalPage() {
           </Link>
         </div>
 
-        {/* Logout Button */}
+        {/* Logout */}
         <div className="absolute top-4 right-4 z-12">
           <button
             onClick={handleLogout}
-            className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg shadow-md transition-colors"
+            className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg shadow-md transition-colors cursor-pointer text-sm sm:text-base"
           >
             Logout
           </button>
@@ -78,26 +158,44 @@ export default function TechnicalPage() {
         {/* Main Content */}
         <div className="container mx-auto pt-24">
           <div className="bg-white/10 backdrop-blur-md rounded-xl shadow-lg overflow-hidden max-w-6xl mx-auto border border-white/20">
-            <div className="bg-gradient-to-r from-pink-900 to-purple-900 p-6 text-white border-b border-purple-700">
-              <h1 className="text-3xl font-bold">Technical Domain</h1>
-              <div className="flex flex-wrap gap-4 mt-2">
-                <span>👥 {filteredRegistrations.length} Registrations</span>
+            <div className="bg-gradient-to-r from-pink-900 to-purple-900 p-6 text-white border-b border-purple-700 flex justify-between items-center">
+              <div>
+                <h1 className="text-3xl font-bold">Technical Domain</h1>
+                <div className="flex flex-wrap gap-4 mt-2">
+                  <span className="text-sm sm:text-base">
+                    {filteredRegistrations.length} Registrations
+                  </span>
+                </div>
+              </div>
+
+              {/* Bulk & Export Buttons */}
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setShowBulkModal(true)}
+                  className="px-4 py-2 bg-pink-700 hover:bg-pink-800 text-white rounded-lg cursor-pointer text-sm sm:text-base"
+                >
+                  Bulk Update
+                </button>
+                <button
+                  onClick={handleExport}
+                  className="px-4 py-2 bg-pink-600 hover:bg-pink-700 text-white rounded-lg cursor-pointer text-sm sm:text-base"
+                >
+                  Export
+                </button>
               </div>
             </div>
 
             <div className="p-6">
+              {/* Filters */}
               <div className="flex justify-between items-center mb-6">
-                <h2 className="text-2xl font-bold text-white">
-                  Participant Registrations
-                </h2>
-
-                {/* Desktop Inputs */}
+                <h2 className="text-2xl font-bold text-white">Participant Registrations</h2>
                 <div className="hidden md:flex gap-4">
+                  {/* Year */}
                   <div className="relative">
                     <select
                       value={yearFilter || ""}
                       onChange={(e) => setYearFilter(e.target.value || null)}
-                      className="bg-gray-800/50 border border-purple-500/30 rounded-lg py-2 px-4 text-white focus:outline-none focus:ring-2 focus:ring-purple-500 appearance-none pr-8"
+                      className="bg-gray-800/50 border border-purple-500/30 rounded-lg py-2 px-4 text-white focus:outline-none focus:ring-2 focus:ring-purple-500 appearance-none pr-8 cursor-pointer text-sm sm:text-base"
                     >
                       <option value="">All Years</option>
                       <option value="1">1st Year</option>
@@ -106,42 +204,42 @@ export default function TechnicalPage() {
                       <option value="4">4th Year</option>
                     </select>
                     <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                      <svg
-                        className="h-5 w-5 text-purple-400"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M19 9l-7 7-7-7"
-                        />
+                      <svg className="h-5 w-5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                       </svg>
                     </div>
                   </div>
 
+                  {/* Round */}
+                  <div className="relative">
+                    <select
+                      value={roundFilter || ""}
+                      onChange={(e) => setRoundFilter(e.target.value || null)}
+                      className="bg-gray-800/50 border border-purple-500/30 rounded-lg py-2 px-4 text-white focus:outline-none focus:ring-2 focus:ring-purple-500 appearance-none pr-8 cursor-pointer text-sm sm:text-base"
+                    >
+                      <option value="">All Rounds</option>
+                      <option value="1">Round 1</option>
+                      <option value="2">Round 2</option>
+                      <option value="3">Round 3</option>
+                    </select>
+                    <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                      <svg className="h-5 w-5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </div>
+                  </div>
+
+                  {/* Search */}
                   <div className="relative">
                     <input
                       type="text"
                       placeholder="Search participants..."
-                      className="bg-gray-800/50 border border-purple-500/30 rounded-lg py-2 px-4 pl-10 text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
+                      className="bg-gray-800/50 border border-purple-500/30 rounded-lg py-2 px-4 pl-10 text-white focus:outline-none focus:ring-2 focus:ring-purple-500 cursor-text text-sm sm:text-base"
                     />
-                    <svg
-                      className="absolute left-3 top-2.5 h-5 w-5 text-purple-400"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                      />
+                    <svg className="absolute left-3 top-2.5 h-5 w-5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                     </svg>
                   </div>
                 </div>
@@ -195,18 +293,18 @@ export default function TechnicalPage() {
                   <input
                     type="text"
                     placeholder="Search participants..."
-                    className="w-full bg-gray-800/50 border border-purple-500/30 rounded-lg py-2 px-4 text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    className="w-full bg-gray-800/50 border border-purple-500/30 rounded-lg py-2 px-4 text-white focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm sm:text-base"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                   />
                 </div>
               )}
               {showMobileFilter && (
-                <div className="mb-4">
+                <div className="mb-4 flex flex-col gap-4">
                   <select
                     value={yearFilter || ""}
                     onChange={(e) => setYearFilter(e.target.value || null)}
-                    className="w-full bg-gray-800/50 border border-purple-500/30 rounded-lg py-2 px-4 text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    className="w-full bg-gray-800/50 border border-purple-500/30 rounded-lg py-2 px-4 text-white focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm sm:text-base"
                   >
                     <option value="">All Years</option>
                     <option value="1">1st Year</option>
@@ -214,9 +312,20 @@ export default function TechnicalPage() {
                     <option value="3">3rd Year</option>
                     <option value="4">4th Year</option>
                   </select>
+                  <select
+                    value={roundFilter || ""}
+                    onChange={(e) => setRoundFilter(e.target.value || null)}
+                    className="w-full bg-gray-800/50 border border-purple-500/30 rounded-lg py-2 px-4 text-white focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm sm:text-base"
+                  >
+                    <option value="">All Rounds</option>
+                    <option value="1">Round 1</option>
+                    <option value="2">Round 2</option>
+                    <option value="3">Round 3</option>
+                  </select>
                 </div>
               )}
 
+              {/* Table */}
               <div className="border border-white/20 rounded-lg overflow-hidden bg-gray-900/50 backdrop-blur-sm">
                 <IndividualRegistrationTable registrations={filteredRegistrations} />
               </div>
@@ -225,13 +334,75 @@ export default function TechnicalPage() {
         </div>
       </div>
 
-      {/* Mobile Logo scaling */}
+      {/* Bulk Modal */}
+      {showBulkModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-gray-900 text-white rounded-lg shadow-lg p-6 w-full max-w-md sm:w-96 relative">
+            <h2 className="text-xl font-bold mb-4">Bulk Update Participants</h2>
+
+            {/* Styled File Input */}
+            <label
+              htmlFor="bulk-file"
+              className="mb-4 w-full inline-block bg-pink-700 hover:bg-pink-800 text-white text-center py-2 rounded-lg cursor-pointer text-sm sm:text-base"
+            >
+              {bulkFile ? bulkFile.name : "Choose CSV File"}
+            </label>
+            <input
+              id="bulk-file"
+              type="file"
+              accept=".csv"
+              onChange={(e) => setBulkFile(e.target.files?.[0] || null)}
+              className="hidden"
+            />
+
+            {/* Label above dropdown */}
+            <p className="mb-2 font-medium">Move participants to:</p>
+            <select
+              value={bulkRound}
+              onChange={(e) => setBulkRound(e.target.value)}
+              className="mb-4 w-full border border-gray-300 rounded-lg px-3 py-2 bg-gray-800 text-white cursor-pointer text-sm sm:text-base"
+            >
+              <option value="1">Round 1</option>
+              <option value="2">Round 2</option>
+              <option value="3">Round 3</option>
+            </select>
+
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => setShowBulkModal(false)}
+                className="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg cursor-pointer text-sm sm:text-base"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleBulkUpdate}
+                className="px-4 py-2 bg-pink-700 hover:bg-pink-800 text-white rounded-lg cursor-pointer text-sm sm:text-base"
+              >
+                Move Participants
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Toast */}
+      {toastMessage && (
+        <div className="fixed bottom-4 right-4 bg-green-600 text-white px-4 py-2 rounded-lg shadow-lg z-50 text-sm sm:text-base">
+          {toastMessage}
+        </div>
+      )}
+
+      {/* Mobile Responsive Styles */}
       <style jsx>{`
         @media (max-width: 480px) {
           div.absolute.top-4.left-4 img {
             height: 32px;
           }
           div.absolute.top-4.right-4 button {
+            padding: 0.5rem;
+            font-size: 0.8rem;
+          }
+          div.bg-gradient-to-r div.flex.gap-2 button {
             padding: 0.5rem;
             font-size: 0.8rem;
           }

@@ -63,8 +63,8 @@ export default function Recruitments2025() {
         </button>
       </div>
 
-      {/* Main Content */}
-      <div className="container mx-auto pt-24 px-4 sm:px-6 lg:px-8 relative z-10">
+            {/* Main Content */}
+      <div className="container mx-auto pt-24 px-4 sm:px-6 lg:px-8 pb-12 relative z-10">
         <h1 className="text-3xl sm:text-2xl xs:text-xl font-bold text-white mb-8 text-center">
           Recruitments 2025
         </h1>
@@ -80,6 +80,7 @@ export default function Recruitments2025() {
           ))}
         </div>
       </div>
+
 
       {/* Mobile specific scaling */}
       <style jsx>{`

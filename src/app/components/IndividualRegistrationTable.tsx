@@ -12,6 +12,7 @@ export default function IndividualRegistrationTable({ registrations }: { registr
             <th className="px-6 py-3 text-left text-xs font-medium text-purple-300 uppercase tracking-wider">Email</th>
             <th className="px-6 py-3 text-left text-xs font-medium text-purple-300 uppercase tracking-wider">Phone</th>
             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Registered At</th>
+            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Round</th>
           </tr>
         </thead>
         <tbody className="bg-gray-900/50 divide-y divide-gray-700">
@@ -22,6 +23,7 @@ export default function IndividualRegistrationTable({ registrations }: { registr
               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">{reg.email}</td>
               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">{reg.phone}</td>
               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{reg.registeredAt}</td>
+              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">{reg.round}</td>
             </tr>
           ))}
         </tbody>
@@ -36,6 +38,7 @@ export default function IndividualRegistrationTable({ registrations }: { registr
             <p className="text-gray-300"><span className="font-semibold text-purple-200">Email:</span> {reg.email}</p>
             <p className="text-gray-300"><span className="font-semibold text-purple-200">Phone:</span> {reg.phone}</p>
             <p className="text-gray-400"><span className="font-semibold text-purple-200">Registered At:</span> {reg.registeredAt}</p>
+            <p className="text-gray-300"><span className="font-semibold text-purple-200">Round:</span> {reg.round}</p>
           </div>
         ))}
       </div>
