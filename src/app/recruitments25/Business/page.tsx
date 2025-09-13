@@ -7,6 +7,10 @@ import IndividualRegistrationTable from "../../components/IndividualRegistration
 import { IndividualRegistration } from "../../types/types";
 import Papa from "papaparse";
 
+type BulkCSVRow = {
+  registerNumber?: string;
+};
+
 export default function BusinessPage() {
   const router = useRouter();
 
@@ -82,11 +86,13 @@ export default function BusinessPage() {
   const handleBulkUpdate = () => {
     if (!bulkFile) return;
 
-    Papa.parse(bulkFile, {
+    Papa.parse<BulkCSVRow>(bulkFile, {
       header: true,
       skipEmptyLines: true,
       complete: (results) => {
-        const regNumbers: string[] = results.data.map((row: any) => row.registerNumber?.trim());
+        const regNumbers: string[] = results.data.map((row) =>
+          row.registerNumber?.trim() || ""
+        );
 
         const notFound: string[] = [];
         const updatedRegistrations = registrations.map((p) => {
@@ -107,7 +113,7 @@ export default function BusinessPage() {
 
         setToastMessage(
           `${regNumbers.length - notFound.length} participants moved to Round ${bulkRound}` +
-          (notFound.length ? `. Not found: ${notFound.join(", ")}` : "")
+            (notFound.length ? `. Not found: ${notFound.join(", ")}` : "")
         );
 
         setShowBulkModal(false);
@@ -185,6 +191,7 @@ export default function BusinessPage() {
               </div>
             </div>
 
+            {/* Filters, Mobile Search, Table, etc. */}
             <div className="p-6">
               <div className="flex justify-between items-center mb-6">
                 <h2 className="text-2xl font-bold text-white">
@@ -384,7 +391,6 @@ export default function BusinessPage() {
               className="hidden"
             />
 
-            {/* Label above dropdown */}
             <p className="mb-2 font-medium">Move participants to:</p>
             <select
               value={bulkRound}
@@ -420,23 +426,6 @@ export default function BusinessPage() {
           {toastMessage}
         </div>
       )}
-
-      {/* Mobile Responsive Styles */}
-      <style jsx>{`
-        @media (max-width: 480px) {
-          div.absolute.top-4.left-4 img {
-            height: 32px;
-          }
-          div.absolute.top-4.right-4 button {
-            padding: 0.5rem;
-            font-size: 0.8rem;
-          }
-          div.bg-gradient-to-r div.flex.gap-2 button {
-            padding: 0.5rem;
-            font-size: 0.8rem;
-          }
-        }
-      `}</style>
     </div>
   );
 }

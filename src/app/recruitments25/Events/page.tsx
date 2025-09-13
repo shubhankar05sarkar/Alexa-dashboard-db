@@ -7,10 +7,14 @@ import IndividualRegistrationTable from "../../components/IndividualRegistration
 import { IndividualRegistration } from "../../types/types";
 import Papa from "papaparse";
 
+type BulkCSVRow = {
+  registerNumber?: string;
+};
+
 export default function EventsPage() {
   const router = useRouter();
 
-  const [registrations, setRegistrations] = useState<IndividualRegistration[]>([]); // replace with API data later if needed
+  const [registrations, setRegistrations] = useState<IndividualRegistration[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [yearFilter, setYearFilter] = useState<string | null>(null);
   const [roundFilter, setRoundFilter] = useState<string | null>(null);
@@ -82,11 +86,13 @@ export default function EventsPage() {
   const handleBulkUpdate = () => {
     if (!bulkFile) return;
 
-    Papa.parse(bulkFile, {
+    Papa.parse<BulkCSVRow>(bulkFile, {
       header: true,
       skipEmptyLines: true,
       complete: (results) => {
-        const regNumbers: string[] = results.data.map((row: any) => row.registerNumber?.trim());
+        const regNumbers: string[] = results.data.map((row) =>
+          row.registerNumber?.trim() || ""
+        );
 
         const notFound: string[] = [];
         const updatedRegistrations = registrations.map((p) => {
@@ -96,7 +102,6 @@ export default function EventsPage() {
           return p;
         });
 
-        // Check which registration numbers were not found
         regNumbers.forEach((rn) => {
           if (!registrations.some((p) => p.registerNumber === rn)) {
             notFound.push(rn);
@@ -124,7 +129,6 @@ export default function EventsPage() {
 
   return (
     <div className="min-h-screen bg-black relative">
-      {/* Background Gradient */}
       <div className="absolute inset-0 bg-gradient-to-br from-purple-800/20 via-blue-800/10 to-black z-0 pointer-events-none" />
 
       <div className="relative z-10 p-8">
@@ -185,6 +189,7 @@ export default function EventsPage() {
               </div>
             </div>
 
+            {/* Filters, Desktop + Mobile Search */}
             <div className="p-6">
               <div className="flex justify-between items-center mb-6">
                 <h2 className="text-2xl font-bold text-white">
@@ -369,7 +374,6 @@ export default function EventsPage() {
           <div className="bg-gray-900 text-white rounded-lg shadow-lg p-6 w-full max-w-md sm:w-96 relative">
             <h2 className="text-xl font-bold mb-4">Bulk Update Participants</h2>
 
-            {/* Styled File Input */}
             <label
               htmlFor="bulk-file"
               className="mb-4 w-full inline-block bg-green-700 hover:bg-green-800 text-white text-center py-2 rounded-lg cursor-pointer text-sm sm:text-base"
@@ -384,7 +388,6 @@ export default function EventsPage() {
               className="hidden"
             />
 
-            {/* Label above dropdown */}
             <p className="mb-2 font-medium">Move participants to:</p>
             <select
               value={bulkRound}
@@ -421,7 +424,6 @@ export default function EventsPage() {
         </div>
       )}
 
-      {/* Mobile Responsive Styles */}
       <style jsx>{`
         @media (max-width: 480px) {
           div.absolute.top-4.left-4 img {

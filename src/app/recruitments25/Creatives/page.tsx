@@ -7,10 +7,14 @@ import IndividualRegistrationTable from "../../components/IndividualRegistration
 import { IndividualRegistration } from "../../types/types";
 import Papa from "papaparse";
 
+type BulkCSVRow = {
+  registerNumber?: string;
+};
+
 export default function CreativesPage() {
   const router = useRouter();
 
-  const [registrations, setRegistrations] = useState<IndividualRegistration[]>([]); // Replace with API data later
+  const [registrations, setRegistrations] = useState<IndividualRegistration[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [yearFilter, setYearFilter] = useState<string | null>(null);
   const [roundFilter, setRoundFilter] = useState<string | null>(null);
@@ -82,11 +86,13 @@ export default function CreativesPage() {
   const handleBulkUpdate = () => {
     if (!bulkFile) return;
 
-    Papa.parse(bulkFile, {
+    Papa.parse<BulkCSVRow>(bulkFile, {
       header: true,
       skipEmptyLines: true,
       complete: (results) => {
-        const regNumbers: string[] = results.data.map((row: any) => row.registerNumber?.trim());
+        const regNumbers: string[] = results.data
+          .map((row) => row.registerNumber?.trim())
+          .filter((rn): rn is string => rn !== undefined);
 
         const notFound: string[] = [];
         const updatedRegistrations = registrations.map((p) => {
@@ -96,7 +102,6 @@ export default function CreativesPage() {
           return p;
         });
 
-        // Check which registration numbers were not found
         regNumbers.forEach((rn) => {
           if (!registrations.some((p) => p.registerNumber === rn)) {
             notFound.push(rn);
@@ -107,7 +112,7 @@ export default function CreativesPage() {
 
         setToastMessage(
           `${regNumbers.length - notFound.length} participants moved to Round ${bulkRound}` +
-          (notFound.length ? `. Not found: ${notFound.join(", ")}` : "")
+            (notFound.length ? `. Not found: ${notFound.join(", ")}` : "")
         );
 
         setShowBulkModal(false);
@@ -185,6 +190,7 @@ export default function CreativesPage() {
               </div>
             </div>
 
+            {/* Filters, Mobile Search, Table, etc. */}
             <div className="p-6">
               <div className="flex justify-between items-center mb-6">
                 <h2 className="text-2xl font-bold text-white">
@@ -193,6 +199,7 @@ export default function CreativesPage() {
 
                 {/* Desktop Inputs */}
                 <div className="hidden md:flex gap-4">
+                  {/* Year Filter */}
                   <div className="relative">
                     <select
                       value={yearFilter || ""}
@@ -222,6 +229,7 @@ export default function CreativesPage() {
                     </div>
                   </div>
 
+                  {/* Round Filter */}
                   <div className="relative">
                     <select
                       value={roundFilter || ""}
@@ -250,6 +258,7 @@ export default function CreativesPage() {
                     </div>
                   </div>
 
+                  {/* Search Input */}
                   <div className="relative">
                     <input
                       type="text"
@@ -274,7 +283,7 @@ export default function CreativesPage() {
                   </div>
                 </div>
 
-                {/* Mobile Icon Buttons */}
+                {/* Mobile Buttons */}
                 <div className="flex md:hidden gap-2">
                   <button
                     onClick={() => setShowMobileSearch(!showMobileSearch)}
@@ -355,6 +364,7 @@ export default function CreativesPage() {
                 </div>
               )}
 
+              {/* Table */}
               <div className="border border-white/20 rounded-lg overflow-hidden bg-gray-900/50 backdrop-blur-sm">
                 <IndividualRegistrationTable registrations={filteredRegistrations} />
               </div>

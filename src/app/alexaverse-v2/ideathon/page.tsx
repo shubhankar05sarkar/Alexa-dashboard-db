@@ -1,12 +1,112 @@
 "use client";
 
 import Link from 'next/link';
+// import TeamRegistrationTable from '../../components/TeamRegistrationTable';
+// import { TeamRegistration } from '../../types/types';
+// import { useState, useEffect } from 'react';
+// Define API response types
+/*
+interface TeamMemberApi {
+  _id?: string;
+  name: string;
+  registrationNumber: string;
+  srmMailId: string;
+  phoneNumber: string;
+}
+
+interface TeamApi {
+  _id?: string;
+  teamName: string;
+  registeredAt: string;
+  teamMembers: TeamMemberApi[];
+}
+*/
 
 export default function IdeathonPage() {
+  // const [registrations, setRegistrations] = useState<TeamRegistration[]>([]);
+  // const [searchTerm, setSearchTerm] = useState('');
+  // const [yearFilter, setYearFilter] = useState<string | null>(null);
+  // const [showMobileSearch, setShowMobileSearch] = useState(false);
+  // const [showMobileFilter, setShowMobileFilter] = useState(false);
+
   const handleLogout = () => {
     localStorage.removeItem("isAuthenticated");
     window.location.href = "/";
   };
+
+  /*
+  // Removed backend fetch logic
+  useEffect(() => {
+    const fetchTeams = async () => {
+      try {
+        const res = await fetch("https://alexaverse-reg-be.onrender.com/api/ideathon/participants", {
+          method: "GET",
+          headers: {
+            "x-event-password": "alexaprod2526"
+          }
+        });
+
+        if (!res.ok) throw new Error(`GET ${res.status} ${res.statusText}`);
+        const result = await res.json();
+
+        if (result.success && Array.isArray(result.data)) {
+          const formatted: TeamRegistration[] = result.data.map((team: TeamApi, idx: number) => ({
+            teamId: team._id || String(idx),
+            teamName: team.teamName,
+            registeredAt: new Date(team.registeredAt).toLocaleString("en-IN", {
+              dateStyle: "medium",
+              timeStyle: "short",
+            }),
+            members: team.teamMembers.map((m: TeamMemberApi, midx: number) => ({
+              id: m._id || `${team._id}-${midx}`,
+              name: m.name,
+              registerNumber: m.registrationNumber,
+              email: m.srmMailId,
+              phone: m.phoneNumber,
+            })),
+          }));
+          setRegistrations(formatted);
+        } else {
+          console.error("Unexpected response shape:", result);
+        }
+      } catch (err) {
+        console.error("Error fetching teams:", err);
+      }
+    };
+
+    fetchTeams();
+  }, []);
+  */
+
+  /*
+  const getYearOfStudy = (registerNumber: string): number => {
+    const batchYear = parseInt(registerNumber.substring(2, 4));
+    const currentYear = 2025;
+    return currentYear - 2000 - batchYear + 1;
+  };
+
+  const filteredRegistrations = registrations.filter(team => {
+    const teamLead = team.members[0];
+    const teamLeadYear = getYearOfStudy(teamLead.registerNumber);
+
+    const searchLower = searchTerm.toLowerCase();
+    const matchesSearch = 
+      team.teamName.toLowerCase().includes(searchLower) ||
+      team.registeredAt.toLowerCase().includes(searchLower) ||
+      team.members.some(member => 
+        member.name.toLowerCase().includes(searchLower) ||
+        member.registerNumber.toLowerCase().includes(searchLower) ||
+        member.email.toLowerCase().includes(searchLower) ||
+        member.phone.includes(searchLower)
+      );
+
+    const matchesYear = yearFilter 
+      ? teamLeadYear.toString() === yearFilter
+      : true;
+
+    return matchesSearch && matchesYear;
+  });
+  */
 
   return (
     <div className="min-h-screen bg-black relative">
@@ -46,8 +146,29 @@ export default function IdeathonPage() {
               <div className="flex flex-wrap gap-4 mt-2">
                 <span>📅 Sep 03, 2025</span>
                 <span>📍 Mini Hall 2</span>
+                {/*<span>👥 {filteredRegistrations.length} Teams Registered</span>*/}
               </div>
             </div>
+
+            {/* 
+            // Removed filters, search, and table display
+            <div className="p-6">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-2xl font-bold text-white">Team Registrations</h2>
+                <div className="hidden md:flex gap-4">
+                  ...filters and search inputs...
+                </div>
+                <div className="flex md:hidden gap-2">
+                  ...mobile search/filter buttons...
+                </div>
+              </div>
+              {showMobileSearch && (...)}
+              {showMobileFilter && (...)}
+              <div className="border border-white/20 rounded-lg overflow-hidden bg-gray-900/50 backdrop-blur-sm">
+                <TeamRegistrationTable registrations={filteredRegistrations} />
+              </div>
+            </div>
+            */}
           </div>
 
           <a 

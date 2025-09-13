@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import IndividualRegistrationTable from "../../components/IndividualRegistrationTable";
@@ -10,7 +11,7 @@ import Papa from "papaparse";
 export default function TechnicalPage() {
   const router = useRouter();
 
-  const [registrations, setRegistrations] = useState<IndividualRegistration[]>([]); // replace with API data later
+  const [registrations, setRegistrations] = useState<IndividualRegistration[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [yearFilter, setYearFilter] = useState<string | null>(null);
   const [roundFilter, setRoundFilter] = useState<string | null>(null);
@@ -51,7 +52,7 @@ export default function TechnicalPage() {
     return matchesSearch && matchesYear && matchesRound;
   });
 
-  // --- CSV Export Function ---
+  // CSV Export
   const handleExport = () => {
     if (filteredRegistrations.length === 0) {
       setToastMessage("No participants to export");
@@ -78,7 +79,7 @@ export default function TechnicalPage() {
     setTimeout(() => setToastMessage(""), 3000);
   };
 
-  // --- Bulk Update ---
+  // Bulk Update
   const handleBulkUpdate = () => {
     if (!bulkFile) return;
 
@@ -86,7 +87,8 @@ export default function TechnicalPage() {
       header: true,
       skipEmptyLines: true,
       complete: (results) => {
-        const regNumbers: string[] = results.data.map((row: any) => row.registerNumber?.trim());
+        const dataRows = results.data as Record<string, string>[];
+        const regNumbers: string[] = dataRows.map((row) => row.registerNumber?.trim() || "");
 
         const notFound: string[] = [];
         const updatedRegistrations = registrations.map((p) => {
@@ -96,7 +98,6 @@ export default function TechnicalPage() {
           return p;
         });
 
-        // Check which registration numbers were not found
         regNumbers.forEach((rn) => {
           if (!registrations.some((p) => p.registerNumber === rn)) {
             notFound.push(rn);
@@ -107,7 +108,7 @@ export default function TechnicalPage() {
 
         setToastMessage(
           `${regNumbers.length - notFound.length} participants moved to Round ${bulkRound}` +
-          (notFound.length ? `. Not found: ${notFound.join(", ")}` : "")
+            (notFound.length ? `. Not found: ${notFound.join(", ")}` : "")
         );
 
         setShowBulkModal(false);
@@ -131,11 +132,10 @@ export default function TechnicalPage() {
         {/* Logo + Back */}
         <div className="absolute top-4 left-4 p-2 z-12 flex flex-col items-start gap-2">
           <Link href="/">
-            <img
-              src="/alexa-logo.svg"
-              alt="Alexa Club Logo"
-              className="h-12 w-auto sm:h-10 xs:h-8 mobile:h-6 hover:opacity-80 transition-opacity cursor-pointer"
-            />
+            <img src="/alexa-logo.svg" 
+            alt="Alexa Club Logo" 
+            className="h-12 w-auto sm:h-10 xs:h-8 mobile:h-6 hover:opacity-80 transition-opacity cursor-pointer"
+             />
           </Link>
           <Link
             href="/recruitments25"
@@ -186,11 +186,11 @@ export default function TechnicalPage() {
             </div>
 
             <div className="p-6">
-              {/* Filters */}
+              {/* Filters (desktop) */}
               <div className="flex justify-between items-center mb-6">
                 <h2 className="text-2xl font-bold text-white">Participant Registrations</h2>
                 <div className="hidden md:flex gap-4">
-                  {/* Year */}
+                  {/* Year Filter */}
                   <div className="relative">
                     <select
                       value={yearFilter || ""}
@@ -204,13 +204,18 @@ export default function TechnicalPage() {
                       <option value="4">4th Year</option>
                     </select>
                     <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                      <svg className="h-5 w-5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg
+                        className="h-5 w-5 text-purple-400"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                       </svg>
                     </div>
                   </div>
 
-                  {/* Round */}
+                  {/* Round Filter */}
                   <div className="relative">
                     <select
                       value={roundFilter || ""}
@@ -223,13 +228,18 @@ export default function TechnicalPage() {
                       <option value="3">Round 3</option>
                     </select>
                     <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                      <svg className="h-5 w-5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg
+                        className="h-5 w-5 text-purple-400"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                       </svg>
                     </div>
                   </div>
 
-                  {/* Search */}
+                  {/* Search Input */}
                   <div className="relative">
                     <input
                       type="text"
@@ -238,13 +248,18 @@ export default function TechnicalPage() {
                       onChange={(e) => setSearchTerm(e.target.value)}
                       className="bg-gray-800/50 border border-purple-500/30 rounded-lg py-2 px-4 pl-10 text-white focus:outline-none focus:ring-2 focus:ring-purple-500 cursor-text text-sm sm:text-base"
                     />
-                    <svg className="absolute left-3 top-2.5 h-5 w-5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg
+                      className="absolute left-3 top-2.5 h-5 w-5 text-purple-400"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                     </svg>
                   </div>
                 </div>
 
-                {/* Mobile Icon Buttons */}
+                {/* Mobile Icons */}
                 <div className="flex md:hidden gap-2">
                   <button
                     onClick={() => setShowMobileSearch(!showMobileSearch)}
@@ -257,12 +272,7 @@ export default function TechnicalPage() {
                       stroke="currentColor"
                       viewBox="0 0 24 24"
                     >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                      />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                     </svg>
                   </button>
                   <button
@@ -276,12 +286,7 @@ export default function TechnicalPage() {
                       stroke="currentColor"
                       viewBox="0 0 24 24"
                     >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2l-7 8v5l-2 1v-6L3 6V4z"
-                      />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2l-7 8v5l-2 1v-6L3 6V4z" />
                     </svg>
                   </button>
                 </div>
@@ -299,6 +304,7 @@ export default function TechnicalPage() {
                   />
                 </div>
               )}
+
               {showMobileFilter && (
                 <div className="mb-4 flex flex-col gap-4">
                   <select
@@ -340,7 +346,6 @@ export default function TechnicalPage() {
           <div className="bg-gray-900 text-white rounded-lg shadow-lg p-6 w-full max-w-md sm:w-96 relative">
             <h2 className="text-xl font-bold mb-4">Bulk Update Participants</h2>
 
-            {/* Styled File Input */}
             <label
               htmlFor="bulk-file"
               className="mb-4 w-full inline-block bg-pink-700 hover:bg-pink-800 text-white text-center py-2 rounded-lg cursor-pointer text-sm sm:text-base"
@@ -355,7 +360,6 @@ export default function TechnicalPage() {
               className="hidden"
             />
 
-            {/* Label above dropdown */}
             <p className="mb-2 font-medium">Move participants to:</p>
             <select
               value={bulkRound}
@@ -387,7 +391,7 @@ export default function TechnicalPage() {
 
       {/* Toast */}
       {toastMessage && (
-        <div className="fixed bottom-4 right-4 bg-green-600 text-white px-4 py-2 rounded-lg shadow-lg z-50 text-sm sm:text-base">
+        <div className="fixed bottom-4 right-4 left-4 md:right-4 md:left-auto bg-green-600 text-white px-4 py-2 rounded-lg shadow-lg z-50 text-sm sm:text-base break-words">
           {toastMessage}
         </div>
       )}
