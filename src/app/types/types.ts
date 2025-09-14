@@ -20,6 +20,9 @@ export type IndividualRegistration = {
   email: string;
   phone: string;
   registeredAt: string;
+};
+
+export type IndividualRegistrationWithRound = IndividualRegistration & {
   round: number;
 };
 

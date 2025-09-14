@@ -1,10 +1,11 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import IndividualRegistrationTable from "../../components/IndividualRegistrationTable";
-import { IndividualRegistration } from "../../types/types";
+import IndividualRegistrationTableWithRound from "../../components/IndividualRegistrationTableWithRound";
+import { IndividualRegistrationWithRound } from "../../types/types";
 import Papa, { ParseResult } from "papaparse";
 
 type BulkCSVRow = {
@@ -14,7 +15,7 @@ type BulkCSVRow = {
 export default function BusinessPage() {
   const router = useRouter();
 
-  const [registrations, setRegistrations] = useState<IndividualRegistration[]>([]); // Replace with API data later
+  const [registrations, setRegistrations] = useState<IndividualRegistrationWithRound[]>([]); // Replace with API data later
   const [searchTerm, setSearchTerm] = useState("");
   const [yearFilter, setYearFilter] = useState<string | null>(null);
   const [roundFilter, setRoundFilter] = useState<string | null>(null);
@@ -363,7 +364,7 @@ export default function BusinessPage() {
               )}
 
               <div className="border border-white/20 rounded-lg overflow-hidden bg-gray-900/50 backdrop-blur-sm">
-                <IndividualRegistrationTable registrations={filteredRegistrations} />
+                <IndividualRegistrationTableWithRound registrations={filteredRegistrations} />
               </div>
             </div>
           </div>

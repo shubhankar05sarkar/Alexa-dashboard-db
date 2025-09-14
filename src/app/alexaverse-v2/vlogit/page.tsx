@@ -38,17 +38,17 @@ export default function VlogitPage() {
         const result: { success: boolean; data: ApiParticipant[] } = await res.json();
 
         if (result.success && Array.isArray(result.data)) {
-          const formatted: IndividualRegistration[] = result.data.map(
-            (p: ApiParticipant, idx: number) => ({
-              id: p._id || String(idx),
-              name: p.name,
-              registerNumber: p.registrationNumber,
-              email: p.srmMailId,
-              phone: p.phoneNumber,
-              registeredAt: new Date(p.registeredAt).toLocaleString("en-IN", {
-                dateStyle: "medium",
-                timeStyle: "short",
-              }),
+                  const formatted: IndividualRegistration[] = result.data.map(
+                    (p: ApiParticipant, idx: number) => ({
+                      id: p._id || String(idx),
+                      name: p.name,
+                      registerNumber: p.registrationNumber,
+                      email: p.srmMailId,
+                      phone: p.phoneNumber,
+                      registeredAt: new Date(p.registeredAt).toLocaleString("en-IN", {
+                        dateStyle: "medium",
+                        timeStyle: "short",
+                      }),
             })
           );
           setRegistrations(formatted);
