@@ -22,6 +22,7 @@ export default function IndividualRegistrationTable({ registrations }: { registr
               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">{reg.email}</td>
               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">{reg.phone}</td>
               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{reg.registeredAt}</td>
+              
             </tr>
           ))}
         </tbody>
@@ -36,6 +37,7 @@ export default function IndividualRegistrationTable({ registrations }: { registr
             <p className="text-gray-300"><span className="font-semibold text-purple-200">Email:</span> {reg.email}</p>
             <p className="text-gray-300"><span className="font-semibold text-purple-200">Phone:</span> {reg.phone}</p>
             <p className="text-gray-400"><span className="font-semibold text-purple-200">Registered At:</span> {reg.registeredAt}</p>
+             
           </div>
         ))}
       </div>

@@ -22,6 +22,11 @@ export type IndividualRegistration = {
   registeredAt: string;
 };
 
+export type IndividualRegistrationWithRound = IndividualRegistration & {
+  round: number;
+};
+
+
 export type Event = {
   id: string;
   name: string;
