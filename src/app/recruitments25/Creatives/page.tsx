@@ -1,16 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import IndividualRegistrationTableWithRound from "../../components/IndividualRegistrationTableWithRound";
-import { IndividualRegistrationWithRound } from "../../types/types"; 
+import { IndividualRegistrationWithRound } from "../../types/types";
 import Papa, { ParseResult } from "papaparse";
 
-type BulkCSVRow = {
-  registerNumber?: string;
-};
+// Define roles
+type UserRole = "Lead&Core"| "Executive";
 
 export default function CreativesPage() {
   const router = useRouter();
@@ -25,6 +23,12 @@ export default function CreativesPage() {
   const [bulkFile, setBulkFile] = useState<File | null>(null);
   const [bulkRound, setBulkRound] = useState("2");
   const [toastMessage, setToastMessage] = useState("");
+
+  // Role state for RBAC (default Executive)
+  const [userRole, setUserRole] = useState<UserRole>("Executive");
+
+  // Dev mode role switcher
+  // const isDev = process.env.NODE_ENV === "development";
 
   const handleLogout = () => {
     localStorage.removeItem("isLoggedIn");
@@ -56,7 +60,7 @@ export default function CreativesPage() {
     return matchesSearch && matchesYear && matchesRound;
   });
 
-  // --- CSV Export Function ---
+  // CSV Export
   const handleExport = () => {
     if (filteredRegistrations.length === 0) {
       setToastMessage("No participants to export");
@@ -83,17 +87,16 @@ export default function CreativesPage() {
     setTimeout(() => setToastMessage(""), 3000);
   };
 
-  // --- Bulk Update ---
+  // Bulk Update
   const handleBulkUpdate = () => {
     if (!bulkFile) return;
 
-    Papa.parse<BulkCSVRow>(bulkFile, {
+    Papa.parse(bulkFile, {
       header: true,
       skipEmptyLines: true,
       complete: (results: ParseResult<Record<string, string>>) => {
-        const regNumbers: string[] = results.data
-          .map((row) => row.registerNumber?.trim())
-          .filter((rn): rn is string => rn !== undefined);
+        const dataRows = results.data as Record<string, string>[];
+        const regNumbers: string[] = dataRows.map((row) => row.registerNumber?.trim() || "");
 
         const notFound: string[] = [];
         const updatedRegistrations = registrations.map((p) => {
@@ -134,7 +137,22 @@ export default function CreativesPage() {
       <div className="absolute inset-0 bg-gradient-to-br from-purple-800/20 via-blue-800/10 to-black z-0 pointer-events-none" />
 
       <div className="relative z-10 p-8">
-        {/* Alexa Logo + Back Link */}
+        {/* Dev Role Switcher */}
+        {/* {isDev && (
+          <div className="fixed top-20 right-4 bg-gray-800 text-white p-2 rounded-lg z-50">
+            <label className="mr-2 font-bold">Role:</label>
+            <select
+              value={userRole}
+              onChange={(e) => setUserRole(e.target.value as UserRole)}
+              className="bg-gray-700 text-white p-1 rounded"
+            >
+              <option value="Lead&Core">Lead&Core</option>
+              <option value="Executive">Executive</option>
+            </select>
+          </div>
+        )} */}
+
+        {/* Logo + Back */}
         <div className="absolute top-4 left-4 p-2 z-12 flex flex-col items-start gap-2">
           <Link href="/">
             <img
@@ -151,7 +169,7 @@ export default function CreativesPage() {
           </Link>
         </div>
 
-        {/* Logout Button */}
+        {/* Logout */}
         <div className="absolute top-4 right-4 z-12">
           <button
             onClick={handleLogout}
@@ -168,20 +186,20 @@ export default function CreativesPage() {
               <div>
                 <h1 className="text-3xl font-bold">Creatives Domain</h1>
                 <div className="flex flex-wrap gap-4 mt-2">
-                  <span className="text-sm sm:text-base">
-                    {filteredRegistrations.length} Registrations
-                  </span>
+                  <span className="text-sm sm:text-base">{filteredRegistrations.length} Registrations</span>
                 </div>
               </div>
 
               {/* Bulk & Export Buttons */}
               <div className="flex gap-2">
-                <button
-                  onClick={() => setShowBulkModal(true)}
-                  className="px-4 py-2 bg-pink-700 hover:bg-pink-800 text-white rounded-lg cursor-pointer text-sm sm:text-base"
-                >
-                  Bulk Update
-                </button>
+                {(userRole === "Lead&Core") && (
+                  <button
+                    onClick={() => setShowBulkModal(true)}
+                    className="px-4 py-2 bg-pink-700 hover:bg-pink-800 text-white rounded-lg cursor-pointer text-sm sm:text-base"
+                  >
+                    Bulk Update
+                  </button>
+                )}
                 <button
                   onClick={handleExport}
                   className="px-4 py-2 bg-pink-600 hover:bg-pink-700 text-white rounded-lg cursor-pointer text-sm sm:text-base"
@@ -191,21 +209,17 @@ export default function CreativesPage() {
               </div>
             </div>
 
-            {/* Filters, Mobile Search, Table, etc. */}
             <div className="p-6">
+              {/* Filters and Table */}
               <div className="flex justify-between items-center mb-6">
-                <h2 className="text-2xl font-bold text-white">
-                  Participant Registrations
-                </h2>
-
-                {/* Desktop Inputs */}
+                <h2 className="text-2xl font-bold text-white">Participant Registrations</h2>
                 <div className="hidden md:flex gap-4">
                   {/* Year Filter */}
                   <div className="relative">
                     <select
                       value={yearFilter || ""}
                       onChange={(e) => setYearFilter(e.target.value || null)}
-                      className="bg-gray-800/50 border border-pink-500/30 rounded-lg py-2 px-4 text-white focus:outline-none focus:ring-2 focus:ring-pink-500 appearance-none pr-8 cursor-pointer text-sm sm:text-base"
+                      className="bg-gray-800/50 border border-purple-500/30 rounded-lg py-2 px-4 text-white focus:outline-none focus:ring-2 focus:ring-purple-500 appearance-none pr-8 cursor-pointer text-sm sm:text-base"
                     >
                       <option value="">All Years</option>
                       <option value="1">1st Year</option>
@@ -214,18 +228,8 @@ export default function CreativesPage() {
                       <option value="4">4th Year</option>
                     </select>
                     <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                      <svg
-                        className="h-5 w-5 text-pink-400"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M19 9l-7 7-7-7"
-                        />
+                      <svg className="h-5 w-5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                       </svg>
                     </div>
                   </div>
@@ -235,7 +239,7 @@ export default function CreativesPage() {
                     <select
                       value={roundFilter || ""}
                       onChange={(e) => setRoundFilter(e.target.value || null)}
-                      className="bg-gray-800/50 border border-pink-500/30 rounded-lg py-2 px-4 text-white focus:outline-none focus:ring-2 focus:ring-pink-500 appearance-none pr-8 cursor-pointer text-sm sm:text-base"
+                      className="bg-gray-800/50 border border-purple-500/30 rounded-lg py-2 px-4 text-white focus:outline-none focus:ring-2 focus:ring-purple-500 appearance-none pr-8 cursor-pointer text-sm sm:text-base"
                     >
                       <option value="">All Rounds</option>
                       <option value="1">Round 1</option>
@@ -243,18 +247,8 @@ export default function CreativesPage() {
                       <option value="3">Round 3</option>
                     </select>
                     <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                      <svg
-                        className="h-5 w-5 text-pink-400"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M19 9l-7 7-7-7"
-                        />
+                      <svg className="h-5 w-5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                       </svg>
                     </div>
                   </div>
@@ -264,87 +258,63 @@ export default function CreativesPage() {
                     <input
                       type="text"
                       placeholder="Search participants..."
-                      className="bg-gray-800/50 border border-pink-500/30 rounded-lg py-2 px-4 pl-10 text-white focus:outline-none focus:ring-2 focus:ring-pink-500 cursor-text text-sm sm:text-base"
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
+                      className="bg-gray-800/50 border border-purple-500/30 rounded-lg py-2 px-4 pl-10 text-white focus:outline-none focus:ring-2 focus:ring-purple-500 cursor-text text-sm sm:text-base"
                     />
                     <svg
-                      className="absolute left-3 top-2.5 h-5 w-5 text-pink-400"
+                      className="absolute left-3 top-2.5 h-5 w-5 text-purple-400"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
                     >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                      />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                     </svg>
                   </div>
                 </div>
 
-                {/* Mobile Buttons */}
+                {/* Mobile Icons */}
                 <div className="flex md:hidden gap-2">
                   <button
-                    onClick={() => setShowMobileSearch(!showMobileSearch)}
+                    onClick={() => setShowMobileSearch((prev) => !prev)}
                     className="p-2 bg-gray-800/50 rounded-lg text-white hover:bg-gray-700"
                     aria-label="Search"
                   >
-                    <svg
-                      className="h-5 w-5"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                      />
+                    <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                     </svg>
                   </button>
                   <button
-                    onClick={() => setShowMobileFilter(!showMobileFilter)}
+                    onClick={() => setShowMobileFilter((prev) => !prev)}
                     className="p-2 bg-gray-800/50 rounded-lg text-white hover:bg-gray-700"
                     aria-label="Filter"
                   >
-                    <svg
-                      className="h-5 w-5"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2l-7 8v5l-2 1v-6L3 6V4z"
-                      />
+                    <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2l-7 8v5l-2 1v-6L3 6V4z" />
                     </svg>
                   </button>
                 </div>
               </div>
 
-              {/* Mobile Inputs */}
+              {/* Mobile Filters */}
               {showMobileSearch && (
                 <div className="mb-4">
                   <input
                     type="text"
                     placeholder="Search participants..."
-                    className="w-full bg-gray-800/50 border border-pink-500/30 rounded-lg py-2 px-4 text-white focus:outline-none focus:ring-2 focus:ring-pink-500 text-sm sm:text-base"
+                    className="w-full bg-gray-800/50 border border-purple-500/30 rounded-lg py-2 px-4 text-white focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm sm:text-base"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                   />
                 </div>
               )}
+
               {showMobileFilter && (
                 <div className="mb-4 flex flex-col gap-4">
                   <select
                     value={yearFilter || ""}
                     onChange={(e) => setYearFilter(e.target.value || null)}
-                    className="w-full bg-gray-800/50 border border-pink-500/30 rounded-lg py-2 px-4 text-white focus:outline-none focus:ring-2 focus:ring-pink-500 text-sm sm:text-base"
+                    className="w-full bg-gray-800/50 border border-purple-500/30 rounded-lg py-2 px-4 text-white focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm sm:text-base"
                   >
                     <option value="">All Years</option>
                     <option value="1">1st Year</option>
@@ -355,7 +325,7 @@ export default function CreativesPage() {
                   <select
                     value={roundFilter || ""}
                     onChange={(e) => setRoundFilter(e.target.value || null)}
-                    className="w-full bg-gray-800/50 border border-pink-500/30 rounded-lg py-2 px-4 text-white focus:outline-none focus:ring-2 focus:ring-pink-500 text-sm sm:text-base"
+                    className="w-full bg-gray-800/50 border border-purple-500/30 rounded-lg py-2 px-4 text-white focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm sm:text-base"
                   >
                     <option value="">All Rounds</option>
                     <option value="1">Round 1</option>
@@ -375,12 +345,11 @@ export default function CreativesPage() {
       </div>
 
       {/* Bulk Modal */}
-      {showBulkModal && (
+      {showBulkModal && (userRole === "Lead&Core") && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
           <div className="bg-gray-900 text-white rounded-lg shadow-lg p-6 w-full max-w-md sm:w-96 relative">
             <h2 className="text-xl font-bold mb-4">Bulk Update Participants</h2>
 
-            {/* Styled File Input */}
             <label
               htmlFor="bulk-file"
               className="mb-4 w-full inline-block bg-pink-700 hover:bg-pink-800 text-white text-center py-2 rounded-lg cursor-pointer text-sm sm:text-base"
@@ -395,7 +364,6 @@ export default function CreativesPage() {
               className="hidden"
             />
 
-            {/* Label above dropdown */}
             <p className="mb-2 font-medium">Move participants to:</p>
             <select
               value={bulkRound}
@@ -427,7 +395,7 @@ export default function CreativesPage() {
 
       {/* Toast */}
       {toastMessage && (
-        <div className="fixed bottom-4 right-4 bg-green-600 text-white px-4 py-2 rounded-lg shadow-lg z-50 text-sm sm:text-base">
+        <div className="fixed bottom-4 right-4 left-4 md:right-4 md:left-auto bg-green-600 text-white px-4 py-2 rounded-lg shadow-lg z-50 text-sm sm:text-base break-words">
           {toastMessage}
         </div>
       )}

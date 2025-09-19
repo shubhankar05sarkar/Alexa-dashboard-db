@@ -26,7 +26,6 @@ export type IndividualRegistrationWithRound = IndividualRegistration & {
   round: number;
 };
 
-
 export type Event = {
   id: string;
   name: string;
@@ -34,4 +33,16 @@ export type Event = {
   date: string;
   location: string;
   isTeamEvent: boolean;
+};
+
+// ---------------- RBAC ----------------
+
+export type UserRole = "lead&core" | "executive";
+
+export type RolePermissions = {
+  canBulkUpdate: boolean;
+  canExport: boolean;
+  canView: boolean;
+  canFilter: boolean;
+  canSearch: boolean;
 };

@@ -8,6 +8,9 @@ import IndividualRegistrationTableWithRound from "../../components/IndividualReg
 import { IndividualRegistrationWithRound } from "../../types/types";
 import Papa, { ParseResult } from "papaparse";
 
+// Define roles
+type UserRole = "Lead&Core" | "Executive";
+
 export default function TechnicalPage() {
   const router = useRouter();
 
@@ -21,6 +24,12 @@ export default function TechnicalPage() {
   const [bulkFile, setBulkFile] = useState<File | null>(null);
   const [bulkRound, setBulkRound] = useState("2");
   const [toastMessage, setToastMessage] = useState("");
+
+  // Role state for RBAC (default Executive)
+  const [userRole, setUserRole] = useState<UserRole>("Executive");
+
+  // Dev mode role switcher
+  // const isDev = process.env.NODE_ENV === "development";
 
   const handleLogout = () => {
     localStorage.removeItem("isLoggedIn");
@@ -129,13 +138,29 @@ export default function TechnicalPage() {
       <div className="absolute inset-0 bg-gradient-to-br from-purple-800/20 via-blue-800/10 to-black z-0 pointer-events-none" />
 
       <div className="relative z-10 p-8">
+        {/* Dev Role Switcher */}
+        {/* {isDev && (
+          <div className="fixed top-20 right-4 bg-gray-800 text-white p-2 rounded-lg z-50">
+            <label className="mr-2 font-bold">Role:</label>
+            <select
+              value={userRole}
+              onChange={(e) => setUserRole(e.target.value as UserRole)}
+              className="bg-gray-700 text-white p-1 rounded"
+            >
+              <option value="Lead&Core">Lead&Core</option>
+              <option value="Executive">Executive</option>
+            </select>
+          </div>
+        )} */}
+
         {/* Logo + Back */}
         <div className="absolute top-4 left-4 p-2 z-12 flex flex-col items-start gap-2">
           <Link href="/">
-            <img src="/alexa-logo.svg" 
-            alt="Alexa Club Logo" 
-            className="h-12 w-auto sm:h-10 xs:h-8 mobile:h-6 hover:opacity-80 transition-opacity cursor-pointer"
-             />
+            <img
+              src="/alexa-logo.svg"
+              alt="Alexa Club Logo"
+              className="h-12 w-auto sm:h-10 xs:h-8 mobile:h-6 hover:opacity-80 transition-opacity cursor-pointer"
+            />
           </Link>
           <Link
             href="/recruitments25"
@@ -162,20 +187,20 @@ export default function TechnicalPage() {
               <div>
                 <h1 className="text-3xl font-bold">Technical Domain</h1>
                 <div className="flex flex-wrap gap-4 mt-2">
-                  <span className="text-sm sm:text-base">
-                    {filteredRegistrations.length} Registrations
-                  </span>
+                  <span className="text-sm sm:text-base">{filteredRegistrations.length} Registrations</span>
                 </div>
               </div>
 
               {/* Bulk & Export Buttons */}
               <div className="flex gap-2">
-                <button
-                  onClick={() => setShowBulkModal(true)}
-                  className="px-4 py-2 bg-pink-700 hover:bg-pink-800 text-white rounded-lg cursor-pointer text-sm sm:text-base"
-                >
-                  Bulk Update
-                </button>
+                {(userRole === "Lead&Core") && (
+                  <button
+                    onClick={() => setShowBulkModal(true)}
+                    className="px-4 py-2 bg-pink-700 hover:bg-pink-800 text-white rounded-lg cursor-pointer text-sm sm:text-base"
+                  >
+                    Bulk Update
+                  </button>
+                )}
                 <button
                   onClick={handleExport}
                   className="px-4 py-2 bg-pink-600 hover:bg-pink-700 text-white rounded-lg cursor-pointer text-sm sm:text-base"
@@ -186,7 +211,7 @@ export default function TechnicalPage() {
             </div>
 
             <div className="p-6">
-              {/* Filters (desktop) */}
+              {/* Filters and Table remain unchanged */}
               <div className="flex justify-between items-center mb-6">
                 <h2 className="text-2xl font-bold text-white">Participant Registrations</h2>
                 <div className="hidden md:flex gap-4">
@@ -262,7 +287,7 @@ export default function TechnicalPage() {
                 {/* Mobile Icons */}
                 <div className="flex md:hidden gap-2">
                   <button
-                    onClick={() => setShowMobileSearch(!showMobileSearch)}
+                    onClick={() => setShowMobileSearch((prev) => !prev)}
                     className="p-2 bg-gray-800/50 rounded-lg text-white hover:bg-gray-700"
                     aria-label="Search"
                   >
@@ -276,7 +301,7 @@ export default function TechnicalPage() {
                     </svg>
                   </button>
                   <button
-                    onClick={() => setShowMobileFilter(!showMobileFilter)}
+                    onClick={() => setShowMobileFilter((prev) => !prev)}
                     className="p-2 bg-gray-800/50 rounded-lg text-white hover:bg-gray-700"
                     aria-label="Filter"
                   >
@@ -292,7 +317,7 @@ export default function TechnicalPage() {
                 </div>
               </div>
 
-              {/* Mobile Inputs */}
+              {/* Mobile Filters */}
               {showMobileSearch && (
                 <div className="mb-4">
                   <input
@@ -341,7 +366,7 @@ export default function TechnicalPage() {
       </div>
 
       {/* Bulk Modal */}
-      {showBulkModal && (
+      {showBulkModal && (userRole === "Lead&Core") && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
           <div className="bg-gray-900 text-white rounded-lg shadow-lg p-6 w-full max-w-md sm:w-96 relative">
             <h2 className="text-xl font-bold mb-4">Bulk Update Participants</h2>
