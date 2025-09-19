@@ -26,6 +26,20 @@ export type IndividualRegistrationWithRound = IndividualRegistration & {
   round: number;
 };
 
+export type Recruitment25Data = {
+  id: number;
+  created_at: string;
+  name: string;
+  registration_number: string;
+  phone_number: string;
+  srm_mail: string;
+  github_link: string;
+  linkedin_link: string;
+  domain1: string;
+  domain2: string | null;
+  round: number;
+};
+
 export type Event = {
   id: string;
   name: string;

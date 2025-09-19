@@ -4,8 +4,10 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import IndividualRegistrationTableWithRound from "../../components/IndividualRegistrationTableWithRound";
-import { IndividualRegistrationWithRound } from "../../types/types";
+import { IndividualRegistrationWithRound, Recruitment25Data } from "../../types/types"; 
 import Papa, { ParseResult } from "papaparse";
+import { supabase } from "../../lib/supabase-client";
+import { useEffect } from "react";
 
 // Define roles
 type UserRole = "Lead&Core"| "Executive";
@@ -30,6 +32,43 @@ export default function CreativesPage() {
   // Dev mode role switcher
   // const isDev = process.env.NODE_ENV === "development";
 
+
+  useEffect(() => {
+    const fetchCreativesRegistrations = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('recruitment_25')
+          .select('*')
+          .or('domain1.ilike.%creatives%,domain2.ilike.%creatives%');
+
+        if (error) {
+          console.error('Error fetching data:', error);
+          setToastMessage("Error fetching data from database");
+          setTimeout(() => setToastMessage(""), 3000);
+          return;
+        }
+
+        // Transform the data to match the expected format
+        const transformedData: IndividualRegistrationWithRound[] = (data as Recruitment25Data[]).map(item => ({
+          id: item.id.toString(),
+          name: item.name,
+          registerNumber: item.registration_number,
+          email: item.srm_mail,
+          phone: item.phone_number,
+          registeredAt: new Date(item.created_at).toLocaleDateString(),
+          round: item.round
+        }));
+
+        setRegistrations(transformedData);
+      } catch (err) {
+        console.error('Error:', err);
+        setToastMessage("Error fetching data from database");
+        setTimeout(() => setToastMessage(""), 3000);
+      }
+    };
+
+    fetchCreativesRegistrations();
+  }, []);
   const handleLogout = () => {
     localStorage.removeItem("isLoggedIn");
     router.push("/login");
