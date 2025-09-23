@@ -7,14 +7,35 @@ import { useState } from "react";
 import IndividualRegistrationTableWithRound from "../../components/IndividualRegistrationTableWithRound";
 import { IndividualRegistrationWithRound, Recruitment25Data } from "../../types/types";
 import Papa, { ParseResult } from "papaparse";
-import { supabase } from "../../lib/supabase-client";
 import { useEffect } from "react";
+import { supabase } from "../../../lib/supabase-client";
+import { useUserRole } from "../../../lib/useUserRole";
 
-// Define roles
-type UserRole = "Lead&Core"| "Executive";
+interface CSVRow {
+  registerNumber?: string;
+}
+
+interface DatabaseRecord {
+  id?: number;
+  created_at?: string;
+  name: string;
+  registration_number: string;
+  phone_number: string;
+  srm_mail: string;
+  github_link: string;
+  linkedin_link: string;
+  domain1: string;
+  domain2?: string;
+  domain1_round: number;
+  domain2_round?: number;
+  modified_at?: string;
+  modified_by1?: string;
+  modified_by2?: string;
+}
 
 export default function BusinessPage() {
   const router = useRouter();
+  const { userRole, loading: roleLoading } = useUserRole();
 
   const [registrations, setRegistrations] = useState<IndividualRegistrationWithRound[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
@@ -27,51 +48,43 @@ export default function BusinessPage() {
   const [bulkRound, setBulkRound] = useState("2");
   const [toastMessage, setToastMessage] = useState("");
 
-  // Role state for RBAC (default Executive)
-  const [userRole, setUserRole] = useState<UserRole>("Executive");
-
-  // Dev mode role switcher
-  // const isDev = process.env.NODE_ENV === "development";
-
-
   useEffect(() => {
     const fetchBusinessRegistrations = async () => {
       try {
-        const { data, error } = await supabase
-          .from('recruitment_25')
-          .select('*')
-          .or('domain1.ilike.%business%,domain2.ilike.%business%');
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (!session) {
+          router.push("/login");
+          return;
+        }
 
-        if (error) {
-          console.error('Error fetching data:', error);
-          setToastMessage("Error fetching data from database");
+        const res = await fetch("/api/business-registrations", {
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`
+          }
+        });
+        const data = await res.json();
+
+        if (!res.ok) {
+          console.error("Backend error:", data.error);
+          setToastMessage("Error fetching data from backend");
           setTimeout(() => setToastMessage(""), 3000);
           return;
         }
 
-        // Transform the data to match the expected format
-        const transformedData: IndividualRegistrationWithRound[] = (data as Recruitment25Data[]).map(item => ({
-          id: item.id.toString(),
-          name: item.name,
-          registerNumber: item.registration_number,
-          email: item.srm_mail,
-          phone: item.phone_number,
-          registeredAt: new Date(item.created_at).toLocaleDateString(),
-          round: item.round
-        }));
-
-        setRegistrations(transformedData);
+        setRegistrations(data);
       } catch (err) {
-        console.error('Error:', err);
-        setToastMessage("Error fetching data from database");
+        console.error("Error:", err);
+        setToastMessage("Error fetching data from backend");
         setTimeout(() => setToastMessage(""), 3000);
       }
     };
 
     fetchBusinessRegistrations();
-  }, []);
-  const handleLogout = () => {
-    localStorage.removeItem("isLoggedIn");
+  }, [router]);
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
     router.push("/login");
   };
 
@@ -127,41 +140,84 @@ export default function BusinessPage() {
     setTimeout(() => setToastMessage(""), 3000);
   };
 
-  // Bulk Update
   const handleBulkUpdate = () => {
     if (!bulkFile) return;
 
     Papa.parse(bulkFile, {
       header: true,
       skipEmptyLines: true,
-      complete: (results: ParseResult<Record<string, string>>) => {
-        const dataRows = results.data as Record<string, string>[];
+      complete: async (results: ParseResult<CSVRow>) => {
+        const dataRows = results.data as CSVRow[];
+        
+        // Check if the CSV has the correct column name
+        if (dataRows.length > 0 && !dataRows[0].hasOwnProperty('registerNumber')) {
+          setToastMessage("CSV file must have a column named 'registerNumber'. Please check and try again.");
+          setTimeout(() => setToastMessage(""), 5000);
+          return;
+        }
+        
         const regNumbers: string[] = dataRows.map((row) => row.registerNumber?.trim() || "");
 
-        const notFound: string[] = [];
-        const updatedRegistrations = registrations.map((p) => {
-          if (regNumbers.includes(p.registerNumber)) {
-            return { ...p, round: Number(bulkRound) };
+        try {
+          const { data: { session } } = await supabase.auth.getSession();
+          
+          // Call the server function to update the database
+          const res = await fetch("/api/business-bulk-update", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${session?.access_token}`,
+            },
+            body: JSON.stringify({
+              registrationNumbers: regNumbers,
+              round: Number(bulkRound)
+            })
+          });
+
+          const data = await res.json();
+
+          if (!res.ok) {
+            console.error("Backend error:", data.error);
+            setToastMessage("Error updating database: " + data.error);
+            setTimeout(() => setToastMessage(""), 3000);
+            return;
           }
-          return p;
-        });
 
-        regNumbers.forEach((rn) => {
-          if (!registrations.some((p) => p.registerNumber === rn)) {
-            notFound.push(rn);
+          // Check for missing registration numbers
+          const updatedRegNumbers = data.map((record: DatabaseRecord) => record.registration_number);
+          const missingRegNumbers = regNumbers.filter(regNum => !updatedRegNumbers.includes(regNum));
+          
+          // Update local state to reflect the changes
+          const updatedRegistrations = registrations.map((p) => {
+            if (regNumbers.includes(p.registerNumber)) {
+              return { ...p, round: Number(bulkRound) };
+            }
+            return p;
+          });
+
+          setRegistrations(updatedRegistrations);
+          
+          // Show success message with missing registration numbers if any
+          let successMessage = data.message || `Successfully updated ${data.length} participants to round ${bulkRound}`;
+          if (missingRegNumbers.length > 0) {
+            const missingNumbers = missingRegNumbers.map(num => `registration number: ${num}`).join(', ');
+            successMessage += `. Not found: ${missingNumbers}`;
+            setToastMessage(successMessage);
+            setTimeout(() => setToastMessage(""), 10000); // 10 seconds for missing reg numbers
+          } else {
+            setToastMessage(successMessage);
+            setTimeout(() => setToastMessage(""), 5000); // 5 seconds for normal success
           }
-        });
 
-        setRegistrations(updatedRegistrations);
+          setShowBulkModal(false);
+          setBulkFile(null);
+          setTimeout(() => setToastMessage(""), 5000);
 
-        setToastMessage(
-          `${regNumbers.length - notFound.length} participants moved to Round ${bulkRound}` +
-            (notFound.length ? `. Not found: ${notFound.join(", ")}` : "")
-        );
-
-        setShowBulkModal(false);
-        setBulkFile(null);
-        setTimeout(() => setToastMessage(""), 5000);
+        } catch (err) {
+          console.error("Error:", err);
+          setToastMessage("Error updating database");
+          setTimeout(() => setToastMessage(""), 3000);
+        }
       },
       error: (err) => {
         console.error("CSV Parsing Error:", err);
@@ -177,29 +233,13 @@ export default function BusinessPage() {
       <div className="absolute inset-0 bg-gradient-to-br from-purple-800/20 via-blue-800/10 to-black z-0 pointer-events-none" />
 
       <div className="relative z-10 p-8">
-        {/* Dev Role Switcher */}
-        {/* {isDev && (
-          <div className="fixed top-20 right-4 bg-gray-800 text-white p-2 rounded-lg z-50">
-            <label className="mr-2 font-bold">Role:</label>
-            <select
-              value={userRole}
-              onChange={(e) => setUserRole(e.target.value as UserRole)}
-              className="bg-gray-700 text-white p-1 rounded"
-            >
-              <option value="Lead&Core">Lead&Core</option>
-              <option value="Executive">Executive</option>
-            </select>
-          </div>
-        )} */}
-
         {/* Logo + Back */}
         <div className="absolute top-4 left-4 p-2 z-12 flex flex-col items-start gap-2">
           <Link href="/">
-            <img
-              src="/alexa-logo.svg"
-              alt="Alexa Club Logo"
-              className="h-12 w-auto sm:h-10 xs:h-8 mobile:h-6 hover:opacity-80 transition-opacity cursor-pointer"
-            />
+            <img src="/alexa-logo.svg" 
+            alt="Alexa Club Logo" 
+            className="h-12 w-auto sm:h-10 xs:h-8 mobile:h-6 hover:opacity-80 transition-opacity cursor-pointer"
+             />
           </Link>
           <Link
             href="/recruitments25"
@@ -209,8 +249,9 @@ export default function BusinessPage() {
           </Link>
         </div>
 
-        {/* Logout */}
-        <div className="absolute top-4 right-4 z-12">
+        {/* User Role & Logout */}
+        <div className="absolute top-4 right-4 z-12 flex items-center gap-3">
+          
           <button
             onClick={handleLogout}
             className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg shadow-md transition-colors cursor-pointer text-sm sm:text-base"
@@ -222,7 +263,7 @@ export default function BusinessPage() {
         {/* Main Content */}
         <div className="container mx-auto pt-24">
           <div className="bg-white/10 backdrop-blur-md rounded-xl shadow-lg overflow-hidden max-w-6xl mx-auto border border-white/20">
-            <div className="bg-gradient-to-r from-blue-900 to-green-900 p-6 text-white border-b border-blue-600/50 flex justify-between items-center">
+            <div className="bg-gradient-to-r from-pink-900 to-purple-900 p-6 text-white border-b border-purple-700 flex justify-between items-center">
               <div>
                 <h1 className="text-3xl font-bold">Business Domain</h1>
                 <div className="flex flex-wrap gap-4 mt-2">
@@ -230,27 +271,39 @@ export default function BusinessPage() {
                 </div>
               </div>
 
-              {/* Bulk & Export Buttons */}
-              <div className="flex gap-2">
-                {(userRole === "Lead&Core") && (
+              {/* Bulk & Export Buttons - Only for lead&core */}
+              {userRole === 'lead&core' && (
+                <div className="flex gap-2">
                   <button
                     onClick={() => setShowBulkModal(true)}
-                    className="px-4 py-2 bg-green-700 hover:bg-green-800 text-white rounded-lg cursor-pointer text-sm sm:text-base"
+                    className="px-4 py-2 bg-pink-700 hover:bg-pink-800 text-white rounded-lg cursor-pointer text-sm sm:text-base"
                   >
                     Bulk Update
                   </button>
-                )}
-                <button
-                  onClick={handleExport}
-                  className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg cursor-pointer text-sm sm:text-base"
-                >
-                  Export
-                </button>
-              </div>
+                  <button
+                    onClick={handleExport}
+                    className="px-4 py-2 bg-pink-600 hover:bg-pink-700 text-white rounded-lg cursor-pointer text-sm sm:text-base"
+                  >
+                    Export
+                  </button>
+                </div>
+              )}
+              
+              {/* Export Button - Only for executive */}
+              {userRole === 'executive' && (
+                <div className="flex gap-2">
+                  <button
+                    onClick={handleExport}
+                    className="px-4 py-2 bg-pink-600 hover:bg-pink-700 text-white rounded-lg cursor-pointer text-sm sm:text-base"
+                  >
+                    Export
+                  </button>
+                </div>
+              )}
             </div>
 
             <div className="p-6">
-              {/* Filters and Table remain unchanged */}
+              {/* Filters (desktop) */}
               <div className="flex justify-between items-center mb-6">
                 <h2 className="text-2xl font-bold text-white">Participant Registrations</h2>
                 <div className="hidden md:flex gap-4">
@@ -259,7 +312,7 @@ export default function BusinessPage() {
                     <select
                       value={yearFilter || ""}
                       onChange={(e) => setYearFilter(e.target.value || null)}
-                      className="bg-gray-800/50 border border-green-500/30 rounded-lg py-2 px-4 text-white focus:outline-none focus:ring-2 focus:ring-green-500 appearance-none pr-8 cursor-pointer text-sm sm:text-base"
+                      className="bg-gray-800/50 border border-purple-500/30 rounded-lg py-2 px-4 text-white focus:outline-none focus:ring-2 focus:ring-purple-500 appearance-none pr-8 cursor-pointer text-sm sm:text-base"
                     >
                       <option value="">All Years</option>
                       <option value="1">1st Year</option>
@@ -269,7 +322,7 @@ export default function BusinessPage() {
                     </select>
                     <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
                       <svg
-                        className="h-5 w-5 text-green-400"
+                        className="h-5 w-5 text-purple-400"
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"
@@ -284,7 +337,7 @@ export default function BusinessPage() {
                     <select
                       value={roundFilter || ""}
                       onChange={(e) => setRoundFilter(e.target.value || null)}
-                      className="bg-gray-800/50 border border-green-500/30 rounded-lg py-2 px-4 text-white focus:outline-none focus:ring-2 focus:ring-green-500 appearance-none pr-8 cursor-pointer text-sm sm:text-base"
+                      className="bg-gray-800/50 border border-purple-500/30 rounded-lg py-2 px-4 text-white focus:outline-none focus:ring-2 focus:ring-purple-500 appearance-none pr-8 cursor-pointer text-sm sm:text-base"
                     >
                       <option value="">All Rounds</option>
                       <option value="1">Round 1</option>
@@ -293,7 +346,7 @@ export default function BusinessPage() {
                     </select>
                     <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
                       <svg
-                        className="h-5 w-5 text-green-400"
+                        className="h-5 w-5 text-purple-400"
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"
@@ -310,10 +363,10 @@ export default function BusinessPage() {
                       placeholder="Search participants..."
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
-                      className="bg-gray-800/50 border border-green-500/30 rounded-lg py-2 px-4 pl-10 text-white focus:outline-none focus:ring-2 focus:ring-green-500 cursor-text text-sm sm:text-base"
+                      className="bg-gray-800/50 border border-purple-500/30 rounded-lg py-2 px-4 pl-10 text-white focus:outline-none focus:ring-2 focus:ring-purple-500 cursor-text text-sm sm:text-base"
                     />
                     <svg
-                      className="absolute left-3 top-2.5 h-5 w-5 text-green-400"
+                      className="absolute left-3 top-2.5 h-5 w-5 text-purple-400"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -362,7 +415,7 @@ export default function BusinessPage() {
                   <input
                     type="text"
                     placeholder="Search participants..."
-                    className="w-full bg-gray-800/50 border border-green-500/30 rounded-lg py-2 px-4 text-white focus:outline-none focus:ring-2 focus:ring-green-500 text-sm sm:text-base"
+                    className="w-full bg-gray-800/50 border border-purple-500/30 rounded-lg py-2 px-4 text-white focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm sm:text-base"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                   />
@@ -374,7 +427,7 @@ export default function BusinessPage() {
                   <select
                     value={yearFilter || ""}
                     onChange={(e) => setYearFilter(e.target.value || null)}
-                    className="w-full bg-gray-800/50 border border-green-500/30 rounded-lg py-2 px-4 text-white focus:outline-none focus:ring-2 focus:ring-green-500 text-sm sm:text-base"
+                    className="w-full bg-gray-800/50 border border-purple-500/30 rounded-lg py-2 px-4 text-white focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm sm:text-base"
                   >
                     <option value="">All Years</option>
                     <option value="1">1st Year</option>
@@ -385,7 +438,7 @@ export default function BusinessPage() {
                   <select
                     value={roundFilter || ""}
                     onChange={(e) => setRoundFilter(e.target.value || null)}
-                    className="w-full bg-gray-800/50 border border-green-500/30 rounded-lg py-2 px-4 text-white focus:outline-none focus:ring-2 focus:ring-green-500 text-sm sm:text-base"
+                    className="w-full bg-gray-800/50 border border-purple-500/30 rounded-lg py-2 px-4 text-white focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm sm:text-base"
                   >
                     <option value="">All Rounds</option>
                     <option value="1">Round 1</option>
@@ -410,9 +463,13 @@ export default function BusinessPage() {
           <div className="bg-gray-900 text-white rounded-lg shadow-lg p-6 w-full max-w-md sm:w-96 relative">
             <h2 className="text-xl font-bold mb-4">Bulk Update Participants</h2>
 
+            <p className="text-sm text-gray-300 mb-4">
+              <strong>Note:</strong> Your CSV file must have a column named &apos;registerNumber&apos; containing the registration numbers.
+            </p>
+
             <label
               htmlFor="bulk-file"
-              className="mb-4 w-full inline-block bg-green-700 hover:bg-green-800 text-white text-center py-2 rounded-lg cursor-pointer text-sm sm:text-base"
+              className="mb-4 w-full inline-block bg-pink-700 hover:bg-pink-800 text-white text-center py-2 rounded-lg cursor-pointer text-sm sm:text-base"
             >
               {bulkFile ? bulkFile.name : "Choose CSV File"}
             </label>
@@ -444,7 +501,7 @@ export default function BusinessPage() {
               </button>
               <button
                 onClick={handleBulkUpdate}
-                className="px-4 py-2 bg-green-700 hover:bg-green-800 text-white rounded-lg cursor-pointer text-sm sm:text-base"
+                className="px-4 py-2 bg-pink-700 hover:bg-pink-800 text-white rounded-lg cursor-pointer text-sm sm:text-base"
               >
                 Move Participants
               </button>
@@ -459,6 +516,23 @@ export default function BusinessPage() {
           {toastMessage}
         </div>
       )}
+
+      {/* Mobile Responsive Styles */}
+      <style jsx>{`
+        @media (max-width: 480px) {
+          div.absolute.top-4.left-4 img {
+            height: 32px;
+          }
+          div.absolute.top-4.right-4 button {
+            padding: 0.5rem;
+            font-size: 0.8rem;
+          }
+          div.bg-gradient-to-r div.flex.gap-2 button {
+            padding: 0.5rem;
+            font-size: 0.8rem;
+          }
+        }
+      `}</style>
     </div>
   );
 }

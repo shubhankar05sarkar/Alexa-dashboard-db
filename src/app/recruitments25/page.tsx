@@ -1,6 +1,10 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
+import { useUserRole } from "../../lib/useUserRole";
+import { useState, useEffect } from "react";
+import { supabase } from "../../lib/supabase-client";
 
 const recruitments = [
   {
@@ -23,9 +27,68 @@ const recruitments = [
     name: "Events",
     description: "Organizing, planning and execution",
   },
+  
 ];
 
 export default function Recruitments2025() {
+  const { userRole, loading: roleLoading } = useUserRole();
+  const [totalRegistrations, setTotalRegistrations] = useState<number | null>(null);
+  const [domainCounts, setDomainCounts] = useState<{ [key: string]: number }>({});
+  const [loading, setLoading] = useState(true);
+  const [domainLoading, setDomainLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (!session) {
+          setLoading(false);
+          setDomainLoading(false);
+          return;
+        }
+
+        const totalRes = await fetch("/api/total-registrations", {
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`
+          }
+        });
+        const totalData = await totalRes.json();
+
+        if (!totalRes.ok) {
+          console.error("Error fetching total registrations:", totalData.error);
+          setTotalRegistrations(0);
+        } else {
+          setTotalRegistrations(totalData.totalRegistrations);
+        }
+
+        // Fetch domain counts
+        const domainRes = await fetch("/api/domain-counts", {
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`
+          }
+        });
+        const domainData = await domainRes.json();
+
+        if (!domainRes.ok) {
+          console.error("Error fetching domain counts:", domainData.error);
+          setDomainCounts({});
+        } else {
+          setDomainCounts(domainData.domainCounts);
+        }
+      } catch (err) {
+        console.error("Error:", err);
+        setTotalRegistrations(0);
+        setDomainCounts({});
+      } finally {
+        setLoading(false);
+        setDomainLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+  
   const handleLogout = () => {
     localStorage.removeItem("isLoggedIn");
     window.location.href = "/login";
@@ -39,10 +102,12 @@ export default function Recruitments2025() {
       {/* Alexa Logo + Back Link */}
       <div className="absolute top-4 left-4 p-2 z-12 flex flex-col items-start gap-2">
         <Link href="/">
-          <img
+          <Image
             src="/alexa-logo.svg"
             alt="Alexa Club Logo"
-            className="h-12 w-auto sm:h-10 xs:h-8 mobile:h-6 hover:opacity-80 transition-opacity cursor-pointer"
+            width={48}
+            height={48}
+            className="h-8 w-auto sm:h-10 xs:h-8 mobile:h-6 hover:opacity-80 transition-opacity cursor-pointer"
           />
         </Link>
         <Link
@@ -53,8 +118,9 @@ export default function Recruitments2025() {
         </Link>
       </div>
 
-      {/* Logout button */}
-      <div className="absolute top-4 right-4 z-12">
+      {/* User Role & Logout */}
+      <div className="absolute top-4 right-4 z-12 flex items-center gap-3">
+        
         <button
           onClick={handleLogout}
           className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
@@ -75,9 +141,33 @@ export default function Recruitments2025() {
               <div className="bg-white/10 backdrop-blur-md rounded-xl shadow-md p-6 hover:shadow-lg transition-all cursor-pointer h-full border-l-4 border-green-500 border border-white/20">
                 <h2 className="text-2xl font-bold text-white">{domain.name}</h2>
                 <p className="text-white/80 mt-2">{domain.description}</p>
+                <div className="mt-3">
+                  {domainLoading ? (
+                    <span className="text-blue-400 text-sm">Loading count...</span>
+                  ) : (
+                    <span className="text-blue-400 font-bold text-lg">
+                      {domainCounts[domain.id.toLowerCase()]?.toLocaleString() || 0}
+                      <span className="text-white mt-2 text-sm font-medium"> registrations</span>
+                    </span>
+                  )}
+                </div>
               </div>
             </Link>
           ))}
+          
+          {/* Total Registrations Box */}
+          <div className="bg-white/10 backdrop-blur-md rounded-xl shadow-md p-6 hover:shadow-lg transition-all h-full border-l-4 border-blue-500 border border-white/20 order-first md:order-none">
+            <h2 className="text-2xl font-bold text-white">Total Unique Registrations</h2>
+            <p className="text-white/80 mt-2">
+              {loading ? (
+                <span className="text-blue-400">Loading...</span>
+              ) : totalRegistrations !== null ? (
+                <span className="text-green-400 font-bold text-4xl">{totalRegistrations.toLocaleString()}</span>
+              ) : (
+                <span className="text-red-400">Unable to load</span>
+              )}
+            </p>
+          </div>
         </div>
       </div>
 

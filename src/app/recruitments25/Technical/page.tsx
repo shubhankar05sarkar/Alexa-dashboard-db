@@ -7,7 +7,6 @@ import { useState } from "react";
 import IndividualRegistrationTableWithRound from "../../components/IndividualRegistrationTableWithRound";
 import { IndividualRegistrationWithRound, Recruitment25Data } from "../../types/types";
 import Papa, { ParseResult } from "papaparse";
-import { supabase } from "../../lib/supabase-client";
 import { useEffect } from "react";
 
 // Define roles
@@ -15,6 +14,7 @@ type UserRole = "Lead&Core" | "Executive";
 
 export default function TechnicalPage() {
   const router = useRouter();
+  const { userRole, loading: roleLoading } = useUserRole();
 
   const [registrations, setRegistrations] = useState<IndividualRegistrationWithRound[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
@@ -37,42 +37,40 @@ export default function TechnicalPage() {
   useEffect(() => {
     const fetchTechnicalRegistrations = async () => {
       try {
-        const { data, error } = await supabase
-          .from('recruitment_25')
-          .select('*')
-          .or('domain1.ilike.%technical%,domain2.ilike.%technical%');
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (!session) {
+          router.push("/login");
+          return;
+        }
 
-        if (error) {
-          console.error('Error fetching data:', error);
-          setToastMessage("Error fetching data from database");
+        const res = await fetch("/api/technical-registrations", {
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`
+          }
+        });
+        const data = await res.json();
+
+        if (!res.ok) {
+          console.error("Backend error:", data.error);
+          setToastMessage("Error fetching data from backend");
           setTimeout(() => setToastMessage(""), 3000);
           return;
         }
 
-        // Transform the data to match the expected format
-        const transformedData: IndividualRegistrationWithRound[] = (data as Recruitment25Data[]).map(item => ({
-          id: item.id.toString(),
-          name: item.name,
-          registerNumber: item.registration_number,
-          email: item.srm_mail,
-          phone: item.phone_number,
-          registeredAt: new Date(item.created_at).toLocaleDateString(),
-          round: item.round
-        }));
-
-        setRegistrations(transformedData);
+        setRegistrations(data);
       } catch (err) {
-        console.error('Error:', err);
-        setToastMessage("Error fetching data from database");
+        console.error("Error:", err);
+        setToastMessage("Error fetching data from backend");
         setTimeout(() => setToastMessage(""), 3000);
       }
     };
 
     fetchTechnicalRegistrations();
-  }, []);
+  }, [router]);
 
-  const handleLogout = () => {
-    localStorage.removeItem("isLoggedIn");
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
     router.push("/login");
   };
 
@@ -128,41 +126,84 @@ export default function TechnicalPage() {
     setTimeout(() => setToastMessage(""), 3000);
   };
 
-  // Bulk Update
   const handleBulkUpdate = () => {
     if (!bulkFile) return;
 
     Papa.parse(bulkFile, {
       header: true,
       skipEmptyLines: true,
-      complete: (results: ParseResult<Record<string, string>>) => {
-        const dataRows = results.data as Record<string, string>[];
+      complete: async (results: ParseResult<CSVRow>) => {
+        const dataRows = results.data as CSVRow[];
+        
+        // Check if the CSV has the correct column name
+        if (dataRows.length > 0 && !dataRows[0].hasOwnProperty('registerNumber')) {
+          setToastMessage("CSV file must have a column named 'registerNumber'. Please check and try again.");
+          setTimeout(() => setToastMessage(""), 5000);
+          return;
+        }
+        
         const regNumbers: string[] = dataRows.map((row) => row.registerNumber?.trim() || "");
 
-        const notFound: string[] = [];
-        const updatedRegistrations = registrations.map((p) => {
-          if (regNumbers.includes(p.registerNumber)) {
-            return { ...p, round: Number(bulkRound) };
+        try {
+          const { data: { session } } = await supabase.auth.getSession();
+          
+          // Call the server function to update the database
+          const res = await fetch("/api/technical-bulk-update", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${session?.access_token}`,
+            },
+            body: JSON.stringify({
+              registrationNumbers: regNumbers,
+              round: Number(bulkRound)
+            })
+          });
+
+          const data = await res.json();
+
+          if (!res.ok) {
+            console.error("Backend error:", data.error);
+            setToastMessage("Error updating database: " + data.error);
+            setTimeout(() => setToastMessage(""), 3000);
+            return;
           }
-          return p;
-        });
 
-        regNumbers.forEach((rn) => {
-          if (!registrations.some((p) => p.registerNumber === rn)) {
-            notFound.push(rn);
+          // Check for missing registration numbers
+          const updatedRegNumbers = data.map((record: DatabaseRecord) => record.registration_number);
+          const missingRegNumbers = regNumbers.filter(regNum => !updatedRegNumbers.includes(regNum));
+          
+          // Update local state to reflect the changes
+          const updatedRegistrations = registrations.map((p) => {
+            if (regNumbers.includes(p.registerNumber)) {
+              return { ...p, round: Number(bulkRound) };
+            }
+            return p;
+          });
+
+          setRegistrations(updatedRegistrations);
+          
+          // Show success message with missing registration numbers if any
+          let successMessage = data.message || `Successfully updated ${data.length} participants to round ${bulkRound}`;
+          if (missingRegNumbers.length > 0) {
+            const missingNumbers = missingRegNumbers.map(num => `registration number: ${num}`).join(', ');
+            successMessage += `. Not found: ${missingNumbers}`;
+            setToastMessage(successMessage);
+            setTimeout(() => setToastMessage(""), 10000); // 10 seconds for missing reg numbers
+          } else {
+            setToastMessage(successMessage);
+            setTimeout(() => setToastMessage(""), 5000); // 5 seconds for normal success
           }
-        });
 
-        setRegistrations(updatedRegistrations);
+          setShowBulkModal(false);
+          setBulkFile(null);
+          setTimeout(() => setToastMessage(""), 5000);
 
-        setToastMessage(
-          `${regNumbers.length - notFound.length} participants moved to Round ${bulkRound}` +
-            (notFound.length ? `. Not found: ${notFound.join(", ")}` : "")
-        );
-
-        setShowBulkModal(false);
-        setBulkFile(null);
-        setTimeout(() => setToastMessage(""), 5000);
+        } catch (err) {
+          console.error("Error:", err);
+          setToastMessage("Error updating database");
+          setTimeout(() => setToastMessage(""), 3000);
+        }
       },
       error: (err) => {
         console.error("CSV Parsing Error:", err);
@@ -210,8 +251,9 @@ export default function TechnicalPage() {
           </Link>
         </div>
 
-        {/* Logout */}
-        <div className="absolute top-4 right-4 z-12">
+        {/* User Role & Logout */}
+        <div className="absolute top-4 right-4 z-12 flex items-center gap-3">
+
           <button
             onClick={handleLogout}
             className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg shadow-md transition-colors cursor-pointer text-sm sm:text-base"
@@ -410,6 +452,10 @@ export default function TechnicalPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
           <div className="bg-gray-900 text-white rounded-lg shadow-lg p-6 w-full max-w-md sm:w-96 relative">
             <h2 className="text-xl font-bold mb-4">Bulk Update Participants</h2>
+
+            <p className="text-sm text-gray-300 mb-4">
+              <strong>Note:</strong> In your CSV file, the column heading must be &apos;registerNumber&apos;.
+            </p>
 
             <label
               htmlFor="bulk-file"
