@@ -8,9 +8,30 @@ import IndividualRegistrationTableWithRound from "../../components/IndividualReg
 import { IndividualRegistrationWithRound, Recruitment25Data } from "../../types/types";
 import Papa, { ParseResult } from "papaparse";
 import { useEffect } from "react";
+import { supabase } from "../../../lib/supabase-client";
+import { useUserRole } from "../../../lib/useUserRole";
 
-// Define roles
-type UserRole = "Lead&Core" | "Executive";
+interface CSVRow {
+  registerNumber?: string;
+}
+
+interface DatabaseRecord {
+  id?: number;
+  created_at?: string;
+  name: string;
+  registration_number: string;
+  phone_number: string;
+  srm_mail: string;
+  github_link: string;
+  linkedin_link: string;
+  domain1: string;
+  domain2?: string;
+  domain1_round: number;
+  domain2_round?: number;
+  modified_at?: string;
+  modified_by1?: string;
+  modified_by2?: string;
+}
 
 export default function TechnicalPage() {
   const router = useRouter();
@@ -27,13 +48,6 @@ export default function TechnicalPage() {
   const [bulkRound, setBulkRound] = useState("2");
   const [toastMessage, setToastMessage] = useState("");
 
-  // Role state for RBAC (default Executive)
-  const [userRole, setUserRole] = useState<UserRole>("Executive");
-
-  // Dev mode role switcher
-  // const isDev = process.env.NODE_ENV === "development";
-  
-  // Fetch data from Supabase
   useEffect(() => {
     const fetchTechnicalRegistrations = async () => {
       try {
@@ -219,29 +233,13 @@ export default function TechnicalPage() {
       <div className="absolute inset-0 bg-gradient-to-br from-purple-800/20 via-blue-800/10 to-black z-0 pointer-events-none" />
 
       <div className="relative z-10 p-8">
-        {/* Dev Role Switcher */}
-        {/* {isDev && (
-          <div className="fixed top-20 right-4 bg-gray-800 text-white p-2 rounded-lg z-50">
-            <label className="mr-2 font-bold">Role:</label>
-            <select
-              value={userRole}
-              onChange={(e) => setUserRole(e.target.value as UserRole)}
-              className="bg-gray-700 text-white p-1 rounded"
-            >
-              <option value="Lead&Core">Lead&Core</option>
-              <option value="Executive">Executive</option>
-            </select>
-          </div>
-        )} */}
-
         {/* Logo + Back */}
         <div className="absolute top-4 left-4 p-2 z-12 flex flex-col items-start gap-2">
           <Link href="/">
-            <img
-              src="/alexa-logo.svg"
-              alt="Alexa Club Logo"
-              className="h-12 w-auto sm:h-10 xs:h-8 mobile:h-6 hover:opacity-80 transition-opacity cursor-pointer"
-            />
+            <img src="/alexa-logo.svg" 
+            alt="Alexa Club Logo" 
+            className="h-12 w-auto sm:h-10 xs:h-8 mobile:h-6 hover:opacity-80 transition-opacity cursor-pointer"
+             />
           </Link>
           <Link
             href="/recruitments25"
@@ -269,31 +267,45 @@ export default function TechnicalPage() {
               <div>
                 <h1 className="text-3xl font-bold">Technical Domain</h1>
                 <div className="flex flex-wrap gap-4 mt-2">
-                  <span className="text-sm sm:text-base">{filteredRegistrations.length} Registrations</span>
+                  <span className="text-sm sm:text-base">
+                    {filteredRegistrations.length} Registrations
+                  </span>
                 </div>
               </div>
 
-              {/* Bulk & Export Buttons */}
-              <div className="flex gap-2">
-                {(userRole === "Lead&Core") && (
+              {/* Bulk & Export Buttons - Only for lead&core */}
+              {userRole === 'lead&core' && (
+                <div className="flex gap-2">
                   <button
                     onClick={() => setShowBulkModal(true)}
                     className="px-4 py-2 bg-pink-700 hover:bg-pink-800 text-white rounded-lg cursor-pointer text-sm sm:text-base"
                   >
                     Bulk Update
                   </button>
-                )}
-                <button
-                  onClick={handleExport}
-                  className="px-4 py-2 bg-pink-600 hover:bg-pink-700 text-white rounded-lg cursor-pointer text-sm sm:text-base"
-                >
-                  Export
-                </button>
-              </div>
+                  <button
+                    onClick={handleExport}
+                    className="px-4 py-2 bg-pink-600 hover:bg-pink-700 text-white rounded-lg cursor-pointer text-sm sm:text-base"
+                  >
+                    Export
+                  </button>
+                </div>
+              )}
+              
+              {/* Export Button - Only for executive */}
+              {userRole === 'executive' && (
+                <div className="flex gap-2">
+                  <button
+                    onClick={handleExport}
+                    className="px-4 py-2 bg-pink-600 hover:bg-pink-700 text-white rounded-lg cursor-pointer text-sm sm:text-base"
+                  >
+                    Export
+                  </button>
+                </div>
+              )}
             </div>
 
             <div className="p-6">
-              {/* Filters and Table remain unchanged */}
+              {/* Filters (desktop) */}
               <div className="flex justify-between items-center mb-6">
                 <h2 className="text-2xl font-bold text-white">Participant Registrations</h2>
                 <div className="hidden md:flex gap-4">
@@ -369,7 +381,7 @@ export default function TechnicalPage() {
                 {/* Mobile Icons */}
                 <div className="flex md:hidden gap-2">
                   <button
-                    onClick={() => setShowMobileSearch((prev) => !prev)}
+                    onClick={() => setShowMobileSearch(!showMobileSearch)}
                     className="p-2 bg-gray-800/50 rounded-lg text-white hover:bg-gray-700"
                     aria-label="Search"
                   >
@@ -383,7 +395,7 @@ export default function TechnicalPage() {
                     </svg>
                   </button>
                   <button
-                    onClick={() => setShowMobileFilter((prev) => !prev)}
+                    onClick={() => setShowMobileFilter(!showMobileFilter)}
                     className="p-2 bg-gray-800/50 rounded-lg text-white hover:bg-gray-700"
                     aria-label="Filter"
                   >
@@ -399,7 +411,7 @@ export default function TechnicalPage() {
                 </div>
               </div>
 
-              {/* Mobile Filters */}
+              {/* Mobile Inputs */}
               {showMobileSearch && (
                 <div className="mb-4">
                   <input
@@ -448,7 +460,7 @@ export default function TechnicalPage() {
       </div>
 
       {/* Bulk Modal */}
-      {showBulkModal && (userRole === "Lead&Core") && (
+      {showBulkModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
           <div className="bg-gray-900 text-white rounded-lg shadow-lg p-6 w-full max-w-md sm:w-96 relative">
             <h2 className="text-xl font-bold mb-4">Bulk Update Participants</h2>

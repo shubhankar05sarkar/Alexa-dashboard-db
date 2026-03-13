@@ -65,3 +65,18 @@ export type RolePermissions = {
   canFilter: boolean;
   canSearch: boolean;
 };
+
+// ---------------- Hacktrax-v2 ----------------
+
+export type HacktraxMember = {
+  name: string;
+  email_id: string;
+  phone_number: string;
+  registration_number: string;
+};
+
+export type HacktraxTeam = {
+  team_name: string;
+  members: HacktraxMember[];
+  transaction_id: string;
+};
