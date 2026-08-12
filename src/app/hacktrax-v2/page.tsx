@@ -32,7 +32,8 @@ export default function HacktraxPage() {
         else if (data?.data) parsedTeams = data.data;
         else {
           const values = Object.values(data);
-          if (Array.isArray(values[0])) parsedTeams = values[0] as HacktraxTeam[];
+          if (Array.isArray(values[0]))
+            parsedTeams = values[0] as HacktraxTeam[];
         }
 
         setTeams(parsedTeams);
@@ -58,13 +59,13 @@ export default function HacktraxPage() {
       team.members.some(
         (m) =>
           m.name.toLowerCase().includes(searchLower) ||
-          m.registration_number.toLowerCase().includes(searchLower)
+          m.registration_number.toLowerCase().includes(searchLower),
       );
 
     const matchesYear = yearFilter
       ? team.members.some(
           (m) =>
-            getYearOfStudy(m.registration_number).toString() === yearFilter
+            getYearOfStudy(m.registration_number).toString() === yearFilter,
         )
       : true;
 
@@ -95,7 +96,7 @@ export default function HacktraxPage() {
             member.email_id,
             member.phone_number,
             team.transaction_id,
-          ].join(",")
+          ].join(","),
         );
       });
     });
@@ -128,12 +129,10 @@ export default function HacktraxPage() {
 
   return (
     <div className="min-h-screen bg-black relative">
-
       {/* Background */}
       <div className="absolute inset-0 bg-gradient-to-br from-purple-800/20 via-blue-800/10 to-black z-0 pointer-events-none" />
 
       <div className="relative z-10 p-8">
-
         {/* Alexa Logo */}
         <div className="absolute top-4 left-4 p-2 z-12">
           <Link href="/">
@@ -156,7 +155,6 @@ export default function HacktraxPage() {
         </div>
 
         <div className="container mx-auto pt-16">
-
           <Link
             href="/"
             className="inline-flex items-center text-purple-300 hover:text-purple-200 mb-6 transition-colors"
@@ -165,10 +163,8 @@ export default function HacktraxPage() {
           </Link>
 
           <div className="bg-white/10 backdrop-blur-md rounded-xl shadow-lg overflow-hidden max-w-6xl mx-auto border border-white/20">
-
             {/* Header */}
             <div className="bg-gradient-to-r from-pink-900 to-purple-900 p-6 text-white border-b border-purple-700 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
-
               <div>
                 <h1 className="text-3xl font-bold">Hacktrax 2.0</h1>
                 <div className="flex flex-wrap gap-4 mt-2">
@@ -177,25 +173,21 @@ export default function HacktraxPage() {
               </div>
 
               <button
-  onClick={handleExport}
-  className="px-4 py-2 bg-pink-600 hover:bg-pink-700 text-white rounded-lg cursor-pointer text-sm sm:text-base"
->
-  Export
-</button>
-
+                onClick={handleExport}
+                className="px-4 py-2 bg-pink-600 hover:bg-pink-700 text-white rounded-lg cursor-pointer text-sm sm:text-base"
+              >
+                Export
+              </button>
             </div>
 
             <div className="p-6">
-
               <div className="flex justify-between items-center mb-6">
-
                 <h2 className="text-2xl font-bold text-white">
                   Team Registrations
                 </h2>
 
                 {/* Desktop Inputs */}
                 <div className="hidden md:flex gap-4">
-
                   <div className="relative">
                     <select
                       value={yearFilter || ""}
@@ -210,8 +202,18 @@ export default function HacktraxPage() {
                     </select>
 
                     <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                      <svg className="h-5 w-5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7"/>
+                      <svg
+                        className="h-5 w-5 text-purple-400"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M19 9l-7 7-7-7"
+                        />
                       </svg>
                     </div>
                   </div>
@@ -225,23 +227,41 @@ export default function HacktraxPage() {
                       onChange={(e) => setSearchTerm(e.target.value)}
                     />
 
-                    <svg className="absolute left-3 top-2.5 h-5 w-5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                    <svg
+                      className="absolute left-3 top-2.5 h-5 w-5 text-purple-400"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                      />
                     </svg>
                   </div>
-
                 </div>
 
                 {/* Mobile Icons */}
                 <div className="flex md:hidden gap-2">
-
                   <button
                     onClick={() => setShowMobileSearch(!showMobileSearch)}
                     className="p-2 bg-gray-800/50 rounded-lg text-white hover:bg-gray-700"
                     aria-label="Search"
                   >
-                    <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                    <svg
+                      className="h-5 w-5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                      />
                     </svg>
                   </button>
 
@@ -250,13 +270,21 @@ export default function HacktraxPage() {
                     className="p-2 bg-gray-800/50 rounded-lg text-white hover:bg-gray-700"
                     aria-label="Filter"
                   >
-                    <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2l-7 8v5l-2 1v-6L3 6V4z"/>
+                    <svg
+                      className="h-5 w-5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2l-7 8v5l-2 1v-6L3 6V4z"
+                      />
                     </svg>
                   </button>
-
                 </div>
-
               </div>
 
               {/* Mobile Search */}
@@ -292,7 +320,6 @@ export default function HacktraxPage() {
               <div className="border border-white/20 rounded-lg overflow-x-auto bg-gray-900/50 backdrop-blur-sm">
                 <HacktraxTeamTable teams={filteredTeams} />
               </div>
-
             </div>
           </div>
         </div>
@@ -311,7 +338,6 @@ export default function HacktraxPage() {
           }
         }
       `}</style>
-
     </div>
   );
 }

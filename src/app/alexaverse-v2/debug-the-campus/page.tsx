@@ -1,13 +1,13 @@
 "use client";
 
-import Link from 'next/link';
-import TeamRegistrationTable from '../../components/TeamRegistrationTable';
-import { TeamRegistration } from '../../types/types';
-import { useState, useEffect } from 'react';
+import Link from "next/link";
+import TeamRegistrationTable from "../../components/TeamRegistrationTable";
+import { TeamRegistration } from "../../types/types";
+import { useState, useEffect } from "react";
 
 export default function DebugCampPage() {
   const [registrations, setRegistrations] = useState<TeamRegistration[]>([]);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState("");
   const [yearFilter, setYearFilter] = useState<string | null>(null);
   const [showMobileSearch, setShowMobileSearch] = useState(false);
   const [showMobileFilter, setShowMobileFilter] = useState(false);
@@ -22,11 +22,12 @@ export default function DebugCampPage() {
             headers: {
               "x-event-password": "alexaprod2526",
             },
-          }
+          },
         );
 
         if (!res.ok) throw new Error(`GET ${res.status} ${res.statusText}`);
-        const result: { success: boolean; data?: Record<string, unknown>[] } = await res.json();
+        const result: { success: boolean; data?: Record<string, unknown>[] } =
+          await res.json();
 
         if (result.success && Array.isArray(result.data)) {
           const formatted: TeamRegistration[] = result.data.map((team) => {
@@ -34,18 +35,23 @@ export default function DebugCampPage() {
             return {
               teamId: String(t["_id"]),
               teamName: String(t["teamName"]),
-              registeredAt: new Date(String(t["registeredAt"])).toLocaleString("en-IN", {
-                dateStyle: "medium",
-                timeStyle: "short",
-              }),
+              registeredAt: new Date(String(t["registeredAt"])).toLocaleString(
+                "en-IN",
+                {
+                  dateStyle: "medium",
+                  timeStyle: "short",
+                },
+              ),
               members: Array.isArray(t["teamMembers"])
-                ? (t["teamMembers"] as Record<string, unknown>[]).map((m, idx: number) => ({
-                    id: `${t["_id"]}_m${idx}`,
-                    name: String(m["name"]),
-                    registerNumber: String(m["registrationNumber"]),
-                    email: String(m["srmMailId"]),
-                    phone: String(m["phoneNumber"]),
-                  }))
+                ? (t["teamMembers"] as Record<string, unknown>[]).map(
+                    (m, idx: number) => ({
+                      id: `${t["_id"]}_m${idx}`,
+                      name: String(m["name"]),
+                      registerNumber: String(m["registrationNumber"]),
+                      email: String(m["srmMailId"]),
+                      phone: String(m["phoneNumber"]),
+                    }),
+                  )
                 : [],
             };
           });
@@ -71,7 +77,7 @@ export default function DebugCampPage() {
     return currentYear - 2000 - batchYear + 1;
   };
 
-  const filteredRegistrations = registrations.filter(team => {
+  const filteredRegistrations = registrations.filter((team) => {
     const teamLead = team.members[0];
     const teamLeadYear = getYearOfStudy(teamLead.registerNumber);
 
@@ -79,11 +85,12 @@ export default function DebugCampPage() {
     const matchesSearch =
       team.teamName.toLowerCase().includes(searchLower) ||
       team.registeredAt.toLowerCase().includes(searchLower) ||
-      team.members.some(member =>
-        member.name.toLowerCase().includes(searchLower) ||
-        member.registerNumber.toLowerCase().includes(searchLower) ||
-        member.email.toLowerCase().includes(searchLower) ||
-        member.phone.toLowerCase().includes(searchLower)
+      team.members.some(
+        (member) =>
+          member.name.toLowerCase().includes(searchLower) ||
+          member.registerNumber.toLowerCase().includes(searchLower) ||
+          member.email.toLowerCase().includes(searchLower) ||
+          member.phone.toLowerCase().includes(searchLower),
       );
 
     const matchesYear = yearFilter
@@ -143,13 +150,15 @@ export default function DebugCampPage() {
 
             <div className="p-6">
               <div className="flex justify-between items-center mb-6">
-                <h2 className="text-2xl font-bold text-white">Team Registrations</h2>
+                <h2 className="text-2xl font-bold text-white">
+                  Team Registrations
+                </h2>
 
                 {/* Desktop Inputs */}
                 <div className="hidden md:flex gap-4">
                   <div className="relative">
                     <select
-                      value={yearFilter || ''}
+                      value={yearFilter || ""}
                       onChange={(e) => setYearFilter(e.target.value || null)}
                       className="bg-gray-800/50 border border-blue-500/30 rounded-lg py-2 px-4 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none pr-8"
                     >
@@ -160,8 +169,18 @@ export default function DebugCampPage() {
                       <option value="4">4th Year Teams</option>
                     </select>
                     <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                      <svg className="h-5 w-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      <svg
+                        className="h-5 w-5 text-blue-400"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M19 9l-7 7-7-7"
+                        />
                       </svg>
                     </div>
                   </div>
@@ -179,7 +198,12 @@ export default function DebugCampPage() {
                       stroke="currentColor"
                       viewBox="0 0 24 24"
                     >
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                      />
                     </svg>
                   </div>
                 </div>
@@ -191,8 +215,18 @@ export default function DebugCampPage() {
                     className="p-2 bg-gray-800/50 rounded-lg text-white hover:bg-gray-700"
                     aria-label="Search"
                   >
-                    <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    <svg
+                      className="h-5 w-5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                      />
                     </svg>
                   </button>
                   <button
@@ -200,8 +234,18 @@ export default function DebugCampPage() {
                     className="p-2 bg-gray-800/50 rounded-lg text-white hover:bg-gray-700"
                     aria-label="Filter"
                   >
-                    <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2l-7 8v5l-2 1v-6L3 6V4z" />
+                    <svg
+                      className="h-5 w-5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2l-7 8v5l-2 1v-6L3 6V4z"
+                      />
                     </svg>
                   </button>
                 </div>
@@ -222,7 +266,7 @@ export default function DebugCampPage() {
               {showMobileFilter && (
                 <div className="mb-4">
                   <select
-                    value={yearFilter || ''}
+                    value={yearFilter || ""}
                     onChange={(e) => setYearFilter(e.target.value || null)}
                     className="w-full bg-gray-800/50 border border-blue-500/30 rounded-lg py-2 px-4 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >

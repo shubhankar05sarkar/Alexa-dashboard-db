@@ -97,7 +97,7 @@ export default function TechnicalPage() {
 
   const getYearOfStudy = (registerNumber: string): number => {
     const batchYear = parseInt(registerNumber.substring(2, 4));
-    const currentYear = 2025;
+    const currentYear = 2026;
     return currentYear - 2000 - batchYear + 1;
   };
 
@@ -268,7 +268,7 @@ export default function TechnicalPage() {
             />
           </Link>
           <Link
-            href="/recruitments25"
+            href="/recruitments26"
             className="inline-flex items-center text-purple-300 hover:text-purple-200 text-sm transition-colors"
           >
             ← Back to all domains
@@ -569,7 +569,7 @@ export default function TechnicalPage() {
 
       {/* Toast */}
       {toastMessage && (
-        <div className="fixed bottom-4 right-4 left-4 md:right-4 md:left-auto bg-green-600 text-white px-4 py-2 rounded-lg shadow-lg z-50 text-sm sm:text-base break-words">
+        <div className="fixed bottom-4 right-4 left-4 md:right-4 md:left-auto bg-red-600 text-white px-4 py-2 rounded-lg shadow-lg z-50 text-sm sm:text-base break-words">
           {toastMessage}
         </div>
       )}

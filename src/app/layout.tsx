@@ -1,14 +1,14 @@
-import './globals.css';
-import type { Metadata } from 'next';
-import { Inter } from 'next/font/google';
-import AuthWrapper from './components/AuthWrapper';
+import "./globals.css";
+import type { Metadata } from "next";
+import { Inter } from "next/font/google";
+import AuthWrapper from "./components/AuthWrapper";
 import { Toaster } from "react-hot-toast";
 
-const inter = Inter({ subsets: ['latin'] });
+const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: 'Alexa Dashboard',
-  description: 'Dashboard for Alexa Developers SRM',
+  title: "Alexa Dashboard",
+  description: "Dashboard for Alexa Developers SRM",
 };
 
 export default function RootLayout({

@@ -27,21 +27,26 @@ const recruitments = [
     name: "Events",
     description: "Organizing, planning and execution",
   },
-  
 ];
 
-export default function Recruitments2025() {
+export default function Recruitments2026() {
   const { userRole, loading: roleLoading } = useUserRole();
-  const [totalRegistrations, setTotalRegistrations] = useState<number | null>(null);
-  const [domainCounts, setDomainCounts] = useState<{ [key: string]: number }>({});
+  const [totalRegistrations, setTotalRegistrations] = useState<number | null>(
+    null,
+  );
+  const [domainCounts, setDomainCounts] = useState<{ [key: string]: number }>(
+    {},
+  );
   const [loading, setLoading] = useState(true);
   const [domainLoading, setDomainLoading] = useState(true);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const { data: { session } } = await supabase.auth.getSession();
-        
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+
         if (!session) {
           setLoading(false);
           setDomainLoading(false);
@@ -50,8 +55,8 @@ export default function Recruitments2025() {
 
         const totalRes = await fetch("/api/total-registrations", {
           headers: {
-            'Authorization': `Bearer ${session.access_token}`
-          }
+            Authorization: `Bearer ${session.access_token}`,
+          },
         });
         const totalData = await totalRes.json();
 
@@ -65,8 +70,8 @@ export default function Recruitments2025() {
         // Fetch domain counts
         const domainRes = await fetch("/api/domain-counts", {
           headers: {
-            'Authorization': `Bearer ${session.access_token}`
-          }
+            Authorization: `Bearer ${session.access_token}`,
+          },
         });
         const domainData = await domainRes.json();
 
@@ -88,8 +93,8 @@ export default function Recruitments2025() {
 
     fetchData();
   }, []);
-  
-  const handleLogout = async () => {
+
+    const handleLogout = async () => {
     const { error } = await supabase.auth.signOut();
     if (error) {
       console.error("Error signing out:", error.message);
@@ -124,7 +129,6 @@ export default function Recruitments2025() {
 
       {/* User Role & Logout */}
       <div className="absolute top-4 right-4 z-12 flex items-center gap-3">
-        
         <button
           onClick={handleLogout}
           className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
@@ -133,40 +137,51 @@ export default function Recruitments2025() {
         </button>
       </div>
 
-            {/* Main Content */}
+      {/* Main Content */}
       <div className="container mx-auto pt-24 px-4 sm:px-6 lg:px-8 pb-12 relative z-10">
         <h1 className="text-3xl sm:text-2xl xs:text-xl font-bold text-white mb-8 text-center">
-          Recruitments 2025
+          Recruitments 2026
         </h1>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {recruitments.map((domain) => (
-            <Link key={domain.id} href={`/recruitments25/${domain.id}`}>
+            <Link key={domain.id} href={`/recruitments26/${domain.id}`}>
               <div className="bg-white/10 backdrop-blur-md rounded-xl shadow-md p-6 hover:shadow-lg transition-all cursor-pointer h-full border-l-4 border-green-500 border border-white/20">
                 <h2 className="text-2xl font-bold text-white">{domain.name}</h2>
                 <p className="text-white/80 mt-2">{domain.description}</p>
                 <div className="mt-3">
                   {domainLoading ? (
-                    <span className="text-blue-400 text-sm">Loading count...</span>
+                    <span className="text-blue-400 text-sm">
+                      Loading count...
+                    </span>
                   ) : (
                     <span className="text-blue-400 font-bold text-lg">
-                      {domainCounts[domain.id.toLowerCase()]?.toLocaleString() || 0}
-                      <span className="text-white mt-2 text-sm font-medium"> registrations</span>
+                      {domainCounts[
+                        domain.id.toLowerCase()
+                      ]?.toLocaleString() || 0}
+                      <span className="text-white mt-2 text-sm font-medium">
+                        {" "}
+                        registrations
+                      </span>
                     </span>
                   )}
                 </div>
               </div>
             </Link>
           ))}
-          
+
           {/* Total Registrations Box */}
           <div className="bg-white/10 backdrop-blur-md rounded-xl shadow-md p-6 hover:shadow-lg transition-all h-full border-l-4 border-blue-500 border border-white/20 order-first md:order-none">
-            <h2 className="text-2xl font-bold text-white">Total Unique Registrations</h2>
+            <h2 className="text-2xl font-bold text-white">
+              Total Unique Registrations
+            </h2>
             <p className="text-white/80 mt-2">
               {loading ? (
                 <span className="text-blue-400">Loading...</span>
               ) : totalRegistrations !== null ? (
-                <span className="text-green-400 font-bold text-4xl">{totalRegistrations.toLocaleString()}</span>
+                <span className="text-green-400 font-bold text-4xl">
+                  {totalRegistrations.toLocaleString()}
+                </span>
               ) : (
                 <span className="text-red-400">Unable to load</span>
               )}
@@ -174,7 +189,6 @@ export default function Recruitments2025() {
           </div>
         </div>
       </div>
-
 
       {/* Mobile specific scaling */}
       <style jsx>{`

@@ -106,7 +106,6 @@ export default function LoginPage() {
     }
 
     const role = userData.role;
-    localStorage.setItem("isLoggedIn", "true");
     toast.success("Signed in successfully");
 
     router.push("/");

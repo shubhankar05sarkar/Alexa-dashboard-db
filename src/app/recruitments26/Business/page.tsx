@@ -36,7 +36,7 @@ interface DatabaseRecord {
   modified_by2?: string;
 }
 
-export default function TechnicalPage() {
+export default function BusinessPage() {
   const router = useRouter();
   const { userRole, loading: roleLoading } = useUserRole();
 
@@ -54,7 +54,7 @@ export default function TechnicalPage() {
   const [toastMessage, setToastMessage] = useState("");
 
   useEffect(() => {
-    const fetchTechnicalRegistrations = async () => {
+    const fetchBusinessRegistrations = async () => {
       try {
         const {
           data: { session },
@@ -65,7 +65,7 @@ export default function TechnicalPage() {
           return;
         }
 
-        const res = await fetch("/api/technical-registrations", {
+        const res = await fetch("/api/business-registrations", {
           headers: {
             Authorization: `Bearer ${session.access_token}`,
           },
@@ -87,7 +87,7 @@ export default function TechnicalPage() {
       }
     };
 
-    fetchTechnicalRegistrations();
+    fetchBusinessRegistrations();
   }, [router]);
 
   const handleLogout = async () => {
@@ -97,7 +97,7 @@ export default function TechnicalPage() {
 
   const getYearOfStudy = (registerNumber: string): number => {
     const batchYear = parseInt(registerNumber.substring(2, 4));
-    const currentYear = 2025;
+    const currentYear = 2026;
     return currentYear - 2000 - batchYear + 1;
   };
 
@@ -180,7 +180,7 @@ export default function TechnicalPage() {
           } = await supabase.auth.getSession();
 
           // Call the server function to update the database
-          const res = await fetch("/api/technical-bulk-update", {
+          const res = await fetch("/api/business-bulk-update", {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
@@ -268,7 +268,7 @@ export default function TechnicalPage() {
             />
           </Link>
           <Link
-            href="/recruitments25"
+            href="/recruitments26"
             className="inline-flex items-center text-purple-300 hover:text-purple-200 text-sm transition-colors"
           >
             ← Back to all domains
@@ -290,7 +290,7 @@ export default function TechnicalPage() {
           <div className="bg-white/10 backdrop-blur-md rounded-xl shadow-lg overflow-hidden max-w-6xl mx-auto border border-white/20">
             <div className="bg-gradient-to-r from-pink-900 to-purple-900 p-6 text-white border-b border-purple-700 flex justify-between items-center">
               <div>
-                <h1 className="text-3xl font-bold">Technical Domain</h1>
+                <h1 className="text-3xl font-bold">Business Domain</h1>
                 <div className="flex flex-wrap gap-4 mt-2">
                   <span className="text-sm sm:text-base">
                     {filteredRegistrations.length} Registrations
@@ -423,7 +423,7 @@ export default function TechnicalPage() {
                 {/* Mobile Icons */}
                 <div className="flex md:hidden gap-2">
                   <button
-                    onClick={() => setShowMobileSearch(!showMobileSearch)}
+                    onClick={() => setShowMobileSearch((prev) => !prev)}
                     className="p-2 bg-gray-800/50 rounded-lg text-white hover:bg-gray-700"
                     aria-label="Search"
                   >
@@ -442,7 +442,7 @@ export default function TechnicalPage() {
                     </svg>
                   </button>
                   <button
-                    onClick={() => setShowMobileFilter(!showMobileFilter)}
+                    onClick={() => setShowMobileFilter((prev) => !prev)}
                     className="p-2 bg-gray-800/50 rounded-lg text-white hover:bg-gray-700"
                     aria-label="Filter"
                   >
@@ -463,7 +463,7 @@ export default function TechnicalPage() {
                 </div>
               </div>
 
-              {/* Mobile Inputs */}
+              {/* Mobile Filters */}
               {showMobileSearch && (
                 <div className="mb-4">
                   <input
@@ -514,14 +514,14 @@ export default function TechnicalPage() {
       </div>
 
       {/* Bulk Modal */}
-      {showBulkModal && (
+      {showBulkModal && userRole === "Lead&Core" && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
           <div className="bg-gray-900 text-white rounded-lg shadow-lg p-6 w-full max-w-md sm:w-96 relative">
             <h2 className="text-xl font-bold mb-4">Bulk Update Participants</h2>
 
             <p className="text-sm text-gray-300 mb-4">
-              <strong>Note:</strong> In your CSV file, the column heading must
-              be &apos;registerNumber&apos;.
+              <strong>Note:</strong> Your CSV file must have a column named
+              &apos;registerNumber&apos; containing the registration numbers.
             </p>
 
             <label
@@ -569,7 +569,7 @@ export default function TechnicalPage() {
 
       {/* Toast */}
       {toastMessage && (
-        <div className="fixed bottom-4 right-4 left-4 md:right-4 md:left-auto bg-green-600 text-white px-4 py-2 rounded-lg shadow-lg z-50 text-sm sm:text-base break-words">
+        <div className="fixed bottom-4 right-4 left-4 md:right-4 md:left-auto bg-red-600 text-white px-4 py-2 rounded-lg shadow-lg z-50 text-sm sm:text-base break-words">
           {toastMessage}
         </div>
       )}

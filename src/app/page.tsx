@@ -1,20 +1,18 @@
 "use client";
 
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { supabase } from "../lib/supabase-client";
 
 export default function Home() {
   const router = useRouter();
 
-  useEffect(() => {
-    if (!localStorage.getItem("isLoggedIn")) {
-      router.push("/login");
+  const handleLogout = async () => {
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      console.error("Error signing out:", error.message);
+      return;
     }
-  }, [router]);
-
-  const handleLogout = () => {
-    localStorage.removeItem("isLoggedIn");
     router.replace("/login");
   };
 
@@ -26,9 +24,9 @@ export default function Home() {
       {/* Alexa Logo */}
       <div className="absolute top-4 left-4 p-2 z-12">
         <Link href="/">
-          <img 
-            src="/alexa-logo.svg" 
-            alt="Alexa Club Logo" 
+          <img
+            src="/alexa-logo.svg"
+            alt="Alexa Club Logo"
             className="h-12 w-auto sm:h-10 xs:h-8 mobile:h-6 cursor-pointer"
           />
         </Link>
@@ -69,6 +67,15 @@ export default function Home() {
           <div className="bg-white/10 backdrop-blur-md p-8 rounded-xl shadow-2xl border border-white/20 w-full max-w-md sm:max-w-sm xs:max-w-xs transition-all duration-200 hover:scale-102 hover:shadow-[0_0_10px_rgba(59,130,246,0.3)] cursor-pointer">
             <h1 className="text-4xl sm:text-3xl xs:text-2xl font-bold text-white mb-2 text-center">
               HackTrax 2.0
+            </h1>
+          </div>
+        </Link>
+
+        {/* Recruitments 2026 */}
+        <Link href="/recruitments26" className="w-full sm:w-auto">
+          <div className="bg-white/10 backdrop-blur-md p-8 rounded-xl shadow-2xl border border-white/20 w-full max-w-md sm:max-w-sm xs:max-w-xs transition-all duration-200 hover:scale-102 hover:shadow-[0_0_10px_rgba(59,130,246,0.3)] cursor-pointer">
+            <h1 className="text-4xl sm:text-3xl xs:text-2xl font-bold text-white mb-2 text-center">
+              Recruitments 2026
             </h1>
           </div>
         </Link>

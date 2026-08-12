@@ -29,7 +29,7 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Invalid or expired token' }, { status: 401 });
     }
     const { count, error: countError } = await userSupabase
-      .from('recruitment_25')
+      .from('recruitment_entries')
       .select('*', { count: 'exact' });
 
     if (countError) {
