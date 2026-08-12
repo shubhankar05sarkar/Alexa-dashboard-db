@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
+import {
+  authenticateRecruitment26Request,
+  isAuthenticatedUser,
+  registrationSupabase,
+} from "../../../lib/recruitments26-server";
 
 interface BulkUpdateRequest {
   registrationNumbers: string[];
@@ -8,42 +12,11 @@ interface BulkUpdateRequest {
 
 export async function POST(req: NextRequest) {
   try {
-    // Get the authorization header
-    const authHeader = req.headers.get("authorization");
-    if (!authHeader) {
-      return NextResponse.json(
-        { error: "No authorization header" },
-        { status: 401 },
-      );
+    const authResult = await authenticateRecruitment26Request(req);
+    if (!isAuthenticatedUser(authResult)) {
+      return authResult.response;
     }
-
-    // Set the session for the request
-    const token = authHeader.replace("Bearer ", "");
-
-    // Create a client with the user's token for RLS context
-    const userSupabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        global: {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        },
-      },
-    );
-
-    const {
-      data: { user },
-      error: authError,
-    } = await userSupabase.auth.getUser();
-
-    if (authError || !user) {
-      return NextResponse.json(
-        { error: "Invalid or expired token" },
-        { status: 401 },
-      );
-    }
+    const { user } = authResult;
 
     const currentTime = new Date().toISOString();
     const modifierEmail = user.email || "";
@@ -71,7 +44,7 @@ export async function POST(req: NextRequest) {
 
     // First, get the current records to determine which domain round to update
     const { data: currentRecords, error: fetchCurrentError } =
-      await userSupabase
+      await registrationSupabase
         .from("recruitment_entries")
         .select("*")
         .in("registration_number", registrationNumbers);
@@ -90,7 +63,7 @@ export async function POST(req: NextRequest) {
       ) || [];
 
     if (businessDomain1Records.length > 0) {
-      const { error: domain1Error } = await userSupabase
+      const { error: domain1Error } = await registrationSupabase
         .from("recruitment_entries")
         .update({
           domain1_round: round,
@@ -118,7 +91,7 @@ export async function POST(req: NextRequest) {
       ) || [];
 
     if (businessDomain2Records.length > 0) {
-      const { error: domain2Error } = await userSupabase
+      const { error: domain2Error } = await registrationSupabase
         .from("recruitment_entries")
         .update({
           domain2_round: round,
@@ -139,7 +112,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Get the updated records to return
-    const { data: updatedData, error: fetchError } = await userSupabase
+    const { data: updatedData, error: fetchError } = await registrationSupabase
       .from("recruitment_entries")
       .select("*")
       .in("registration_number", registrationNumbers);
@@ -149,7 +122,7 @@ export async function POST(req: NextRequest) {
     }
 
     return NextResponse.json(updatedData || []);
-  } catch (err) {
+  } catch {
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 },

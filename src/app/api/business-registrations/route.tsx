@@ -1,5 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
+import {
+  authenticateRecruitment26Request,
+  getRecruitment26EntryRound,
+  isAuthenticatedUser,
+  registrationSupabase,
+} from "../../../lib/recruitments26-server";
 
 interface RecruitmentData {
   id: number;
@@ -9,9 +14,9 @@ interface RecruitmentData {
   phone_number: string;
   created_at: string;
   first_domain: string;
-  second_domain: string;
-  github_link: string | null;
-  linkedin_link: string | null;
+  second_domain: string | null;
+  domain1_round: number;
+  domain2_round: number | null;
 }
 
 interface IndividualRegistrationWithRound {
@@ -30,42 +35,12 @@ interface IndividualRegistrationWithRound {
 
 export async function GET(req: NextRequest) {
   try {
-    const authHeader = req.headers.get("authorization");
-
-    if (!authHeader) {
-      return NextResponse.json(
-        { error: "No authorization header" },
-        { status: 401 },
-      );
+    const authResult = await authenticateRecruitment26Request(req);
+    if (!isAuthenticatedUser(authResult)) {
+      return authResult.response;
     }
 
-    const token = authHeader.replace("Bearer ", "");
-
-    const userSupabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        global: {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        },
-      },
-    );
-
-    const {
-      data: { user },
-      error: authError,
-    } = await userSupabase.auth.getUser();
-
-    if (authError || !user) {
-      return NextResponse.json(
-        { error: "Invalid or expired token" },
-        { status: 401 },
-      );
-    }
-
-    const { data, error } = await userSupabase
+    const { data, error } = await registrationSupabase
       .from("recruitment_entries")
       .select("*")
       .or("first_domain.ilike.%business%,second_domain.ilike.%business%");
@@ -89,20 +64,18 @@ export async function GET(req: NextRequest) {
         phone: item.phone_number,
         registeredAt: new Date(item.created_at).toLocaleDateString(),
 
-        // Every new applicant starts in Round 1
-        round: 1,
+        round: getRecruitment26EntryRound(item, "business"),
 
         domain1: item.first_domain,
         domain2: item.second_domain,
 
-        // Keep these for compatibility with the existing frontend
-        domain1_round: 1,
-        domain2_round: null,
+        domain1_round: item.domain1_round,
+        domain2_round: item.domain2_round,
       };
     });
 
     return NextResponse.json(transformedData);
-  } catch (err) {
+  } catch {
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 },

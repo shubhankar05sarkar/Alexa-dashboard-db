@@ -1,41 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
+import {
+  authenticateRecruitment26Request,
+  isAuthenticatedUser,
+  registrationSupabase,
+} from "../../../lib/recruitments26-server";
 
 export async function GET(req: NextRequest) {
   try {
-    const authHeader = req.headers.get("authorization");
-
-    if (!authHeader) {
-      return NextResponse.json(
-        { error: "No authorization header" },
-        { status: 401 },
-      );
-    }
-
-    const token = authHeader.replace("Bearer ", "");
-
-    const userSupabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        global: {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        },
-      },
-    );
-
-    const {
-      data: { user },
-      error: authError,
-    } = await userSupabase.auth.getUser();
-
-    if (authError || !user) {
-      return NextResponse.json(
-        { error: "Invalid or expired token" },
-        { status: 401 },
-      );
+    const authResult = await authenticateRecruitment26Request(req);
+    if (!isAuthenticatedUser(authResult)) {
+      return authResult.response;
     }
 
     const domains = [
@@ -48,7 +22,7 @@ export async function GET(req: NextRequest) {
     const domainCounts: { [key: string]: number } = {};
 
     for (const domain of domains) {
-      const { count, error: countError } = await userSupabase
+      const { count, error: countError } = await registrationSupabase
         .from("recruitment_entries")
         .select("*", { count: "exact" })
         .or(
@@ -68,7 +42,7 @@ export async function GET(req: NextRequest) {
     }
 
     return NextResponse.json({ domainCounts });
-  } catch (err) {
+  } catch {
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 },
