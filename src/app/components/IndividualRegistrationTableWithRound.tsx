@@ -33,10 +33,7 @@ export default function IndividualRegistrationTableWithRound({
         </thead>
         <tbody className="bg-gray-900/50 divide-y divide-gray-700">
           {registrations.map((reg) => (
-            <tr
-              key={reg.id}
-              className="hover:bg-gray-800/50 transition-colors"
-            >
+            <tr key={reg.id} className="hover:bg-gray-800/50 transition-colors">
               <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-white">
                 {reg.name}
               </td>
@@ -81,7 +78,9 @@ export default function IndividualRegistrationTableWithRound({
               {reg.phone}
             </p>
             <p className="text-gray-400">
-              <span className="font-semibold text-purple-200">Registered At:</span>{" "}
+              <span className="font-semibold text-purple-200">
+                Registered At:
+              </span>{" "}
               {reg.registeredAt}
             </p>
             <p className="text-gray-300">

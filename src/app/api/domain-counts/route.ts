@@ -1,44 +1,66 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import { NextRequest, NextResponse } from "next/server";
+import { createClient } from "@supabase/supabase-js";
 
 export async function GET(req: NextRequest) {
   try {
-    const authHeader = req.headers.get('authorization');
+    const authHeader = req.headers.get("authorization");
+
     if (!authHeader) {
-      return NextResponse.json({ error: 'No authorization header' }, { status: 401 });
+      return NextResponse.json(
+        { error: "No authorization header" },
+        { status: 401 },
+      );
     }
 
-    const token = authHeader.replace('Bearer ', '');
-    
+    const token = authHeader.replace("Bearer ", "");
+
     const userSupabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
       {
         global: {
           headers: {
-            Authorization: `Bearer ${token}`
-          }
-        }
-      }
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      },
     );
-    
-    const { data: { user }, error: authError } = await userSupabase.auth.getUser();
-    
+
+    const {
+      data: { user },
+      error: authError,
+    } = await userSupabase.auth.getUser();
+
     if (authError || !user) {
-      return NextResponse.json({ error: 'Invalid or expired token' }, { status: 401 });
+      return NextResponse.json(
+        { error: "Invalid or expired token" },
+        { status: 401 },
+      );
     }
 
-    const domains = ['technical', 'creatives', 'business', 'events'];
+    const domains = [
+      "technical",
+      "creatives",
+      "business",
+      "events",
+    ];
+
     const domainCounts: { [key: string]: number } = {};
 
     for (const domain of domains) {
       const { count, error: countError } = await userSupabase
-        .from('recruitment_25')
-        .select('*', { count: 'exact' })
-        .or(`domain1.ilike.%${domain}%,domain2.ilike.%${domain}%`);
+        .from("recruitment_entries")
+        .select("*", { count: "exact" })
+        .or(
+          `first_domain.ilike.%${domain}%,second_domain.ilike.%${domain}%`,
+        );
 
       if (countError) {
-        console.error(`Error counting ${domain} registrations:`, countError);
+        console.error(
+          `Error counting ${domain} registrations:`,
+          countError,
+        );
+
         domainCounts[domain] = 0;
       } else {
         domainCounts[domain] = count || 0;
@@ -46,8 +68,10 @@ export async function GET(req: NextRequest) {
     }
 
     return NextResponse.json({ domainCounts });
-    
   } catch (err) {
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 },
+    );
   }
 }

@@ -50,7 +50,6 @@ export default function AlexaVerseV2() {
       return;
     }
     router.push("/login");
-    localStorage.removeItem("isLoggedIn");
   };
 
   return (

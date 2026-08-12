@@ -30,20 +30,19 @@ export type IndividualRegistrationWithRound = IndividualRegistration & {
   domain2_round: number | null;
 };
 
-export type Recruitment25Data = {
+export type RecruitmentData = {
   id: number;
   created_at: string;
   name: string;
-  registration_number: string;
+  register_number: string;
   phone_number: string;
-  srm_mail: string;
-  github_link: string;
-  linkedin_link: string;
-  domain1: string;
-  domain2: string | null;
-  domain1_round: number;
-  domain2_round: number | null;
+  srmist_email: string;
+  github_link: string | null;
+  linkedin_link: string | null;
+  first_domain: string;
+  second_domain: string;
 };
+
 
 export type Event = {
   id: string;
