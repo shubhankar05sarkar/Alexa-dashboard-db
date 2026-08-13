@@ -5,7 +5,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import IndividualRegistrationTableWithRound from "../../components/IndividualRegistrationTableWithRound";
-import { IndividualRegistrationWithRound, Recruitment25Data } from "../../types/types";
+import { IndividualRegistrationWithRound } from "../../types/types";
 import Papa, { ParseResult } from "papaparse";
 import { useEffect } from "react";
 import { supabase } from "../../../lib/supabase-client";

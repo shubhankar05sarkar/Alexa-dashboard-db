@@ -45,7 +45,7 @@ export default function LoginPage() {
         return;
       }
 
-      toast.success("Signup successful! Please check your email to confirm.");
+      toast.success("Signup successful!");
       setEmail("");
       setPassword("");
       setIsSignUp(false);
